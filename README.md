@@ -19,6 +19,7 @@ This tool will be designed to track and compare food and product prices across d
 4. **Fake Discount Detection:** Identify suspicious discounts where prices were raised right before a promotion.
 5. **Product Price Status Flagging:** Mark items with clear visual flags (e.g., `Normal`, `SuspiciousDiscount`, `PriceSurge`).
 6. **Background Data Collection:** Automatically fetch and refresh latest prices periodically in the background.
-7. **Stream-Based File Ingestion:** Efficiently load large catalog data files using C# Streams to minimize memory usage.
+7. **User Watchlist & Price Alerts:** Allow users to save favorite items to a personalized watchlist and get notified when prices drop.
 8. **Cheapest Basket Calculator:** Calculate which store offers the lowest total price for a full user shopping list.
-   ....
+9. **System health and monitoring dashboard:** provide metrics for monitoring system health, parsing errors, and performance.
+10. **User Price Reporting Feature:** Allows any user to report a price discrepancy between the platform and the retailer.
