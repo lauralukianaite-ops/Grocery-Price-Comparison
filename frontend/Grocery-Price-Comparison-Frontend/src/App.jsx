@@ -11,7 +11,7 @@ function App() {
     <>
       <section id="center">
         <div className="hero">
-          <h1>Ernestas lopas</h1>
+          <h1>Benas lopas</h1>
         </div>
       </section>
     </>
