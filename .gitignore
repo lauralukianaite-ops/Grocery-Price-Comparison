@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+scraper/.env
 
 # User-specific files
 *.rsuser
@@ -37,6 +38,7 @@ bld/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
+.codex/
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
 
@@ -424,6 +426,10 @@ autom4te.cache/
 tarballs/
 test-results/
 
+# Mac bundle stuff
+*.dmg
+*.app
+
 # content below from: https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
 # General
 .DS_Store
@@ -480,3 +486,10 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+#secrets
+secrets.json
+client_secret.json
+/mcp.json
+*.mcp.json
+.env
