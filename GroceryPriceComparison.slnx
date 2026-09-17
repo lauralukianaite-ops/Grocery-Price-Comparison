@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/scraper/">
+    <Project Path="scraper/scrapper.csproj" />
+  </Folder>
+  <Project Path="backend/backend.csproj" />
+</Solution>
