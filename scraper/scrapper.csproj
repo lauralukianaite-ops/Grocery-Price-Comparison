@@ -6,10 +6,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>dotnet-scrapper-c793dc83-81d3-42eb-8d43-e7aacc25359d</UserSecretsId>
   </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="DotNetEnv" Version="3.2.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+        <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DotNetEnv" Version="3.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
-  </ItemGroup>
 </Project>

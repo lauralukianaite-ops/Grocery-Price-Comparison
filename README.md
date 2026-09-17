@@ -11,8 +11,7 @@ This tool will be designed to track and compare food and product prices across d
 
 ---
 
-## 10 Core Features
-
+## Core Features
 
 1. **Product Similary index** Allows to recommend the user similar products. The index will consist of category, name, weidth, etc.
 2. **Cross-Store Product Search:** Search for identical products by name or category across multiple supported stores.
