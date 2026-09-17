@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Scraper.Core.Interfaces;
 using Scraper.Core.Services;
 using Scraper.Core.Settings;
-using Scraper.Core.Settings;
+using scraper;
 
 DotNetEnv.Env.Load();
 
@@ -14,6 +14,7 @@ builder.Services.Configure<GlobalSettings>(
 );
 
 builder.Services.AddTransient<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
+builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();
 
