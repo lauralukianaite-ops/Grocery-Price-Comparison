@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,7 +39,7 @@ public class TestController : ControllerBase
         // If the database is empty, assign test values
         if (priceEntity == null)
         {
-            itemName = "Testinis Pienas 2.5%";
+            itemName = "Testinis Kefyras 2.5%";
             itemPrice = 1.49m;
         }
         else
@@ -55,5 +56,30 @@ public class TestController : ControllerBase
             ExtractedName = itemName, 
             ExtractedPrice = itemPrice
         });
+    }
+
+    // Seed test data
+    [HttpPost("seed-data")]
+    public async Task<IActionResult> SeedTestData()
+    {
+        var store = new Store { Name = "Barbora" };
+        _context.Stores.Add(store);
+        await _context.SaveChangesAsync();
+
+        var item = new Item { Name = "Testinis Pienas 2.5%" };
+        _context.Items.Add(item);
+        await _context.SaveChangesAsync();
+
+        var price = new Price 
+        { 
+            StoreId = store.Id, 
+            ItemId = item.Id, 
+            Amount = 1.49m,
+            RecordedAt = DateTime.UtcNow
+        };
+        _context.Prices.Add(price);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { Message = "Test data seeded successfully!" });
     }
 }

@@ -21,7 +21,7 @@ else
 {
     connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? builder.Configuration["DATABASE_URL"]
-        ?? throw new InvalidOperationException("Duomenų bazės prisijungimo duomenys nerasti .env faile!");
+        ?? throw new InvalidOperationException("Data base connection details was not found in .env file!");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
