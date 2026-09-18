@@ -44,7 +44,7 @@ public class TestController : ControllerBase
         else
         {
             // If data is available, extract from DB
-            itemName = priceEntity.Item.Name;
+            itemName = priceEntity.Item?.Name ?? "Name not found";
             itemPrice = priceEntity.Amount;
         }
 
