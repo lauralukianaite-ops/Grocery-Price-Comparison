@@ -1,18 +1,13 @@
+using System.Text.Json;
 using Microsoft.Playwright;
 
 namespace scraper;
 
 public class BarboraProductDto
 {
-    public string Id { get; set; } = string.Empty;
-
     public string Title { get; set; } = string.Empty;
 
     public decimal Price { get; set; }
-
-    public string Image { get; set; } = string.Empty;
-
-    public string Brand_Name { get; set; } = string.Empty;
 }
 
 public class Worker(ILogger<Worker> logger) : BackgroundService
@@ -21,24 +16,42 @@ public class Worker(ILogger<Worker> logger) : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Sending request to Barbora API...");
+            logger.LogInformation("Siunčiama užklausa į Barbora...");
 
-            // initializes Playwright
             using var playwright = await Playwright.CreateAsync();
-            // creates light HTTP client
-            var request = await playwright.APIRequest.NewContextAsync();
-            // tries to fetch raw data
-            var response = await request.GetAsync("https://barbora.lt/paieska?q=pienas");
+            await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+            var page = await browser.NewPageAsync();
 
-            if (response.Ok)
+            // 1. opens site and takes HTML answer
+            var response = await page.GotoAsync("https://barbora.lt/paieska?q=pienas", new PageGotoOptions
             {
-                logger.LogInformation("Success {time}", DateTimeOffset.Now);
+                WaitUntil = WaitUntilState.DOMContentLoaded
+            });
+
+            var html = await response!.TextAsync();
+
+            // 2. cuts JSON between '[' and ']'
+            int start = html.IndexOf("window.b_productList = [") + "window.b_productList = ".Length;
+            int end = html.IndexOf("];", start) + 1;
+            var jsonText = html[start..end];
+
+            // 3. takes only title and price
+            using var doc = JsonDocument.Parse(jsonText);
+            var products = doc.RootElement.EnumerateArray().Select(p => new BarboraProductDto
+            {
+                Title = p.GetProperty("title").GetString()!,
+                Price = p.GetProperty("price").GetDecimal()
+            }).ToList();
+
+            foreach (var product in products)
+            {
+            logger.LogInformation("Product: {Title} | Price: {Price} €", product.Title, product.Price);
             }
-
-
             
-            logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            await Task.Delay(10000000, stoppingToken);
+            logger.LogInformation("Found products: {count}", products.Count);
+
+
+            await Task.Delay(1000000, stoppingToken);
         }
     }
 }
