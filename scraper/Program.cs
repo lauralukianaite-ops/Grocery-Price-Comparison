@@ -1,26 +1,15 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Scraper.Core.Interfaces;
-using Scraper.Core.Services;
-using Scraper.Core.Settings;
-using Scraper.Core.Settings;
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+using scrapper;
 
 DotNetEnv.Env.Load();
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.Configure<GlobalSettings>(
-    builder.Configuration.GetSection(GlobalSettings.SectionName)
-);
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddTransient<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
+builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();
-
-using (var scope = host.Services.CreateScope())
-{
-    var factory = scope.ServiceProvider.GetRequiredService<IDatabaseConnectionFactory>();
-    factory.TestOptions();
-}
-
 await host.RunAsync();
