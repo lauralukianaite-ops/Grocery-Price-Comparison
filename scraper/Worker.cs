@@ -1,16 +1,22 @@
 namespace scrapper;
 
-public class Worker(ILogger<Worker> logger) : BackgroundService
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+
+public class Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (logger.IsEnabled(LogLevel.Information))
+            using (var scope = scopeFactory.CreateScope())
             {
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var storeCount = await db.Stores.CountAsync(stoppingToken);
+                logger.LogInformation("Worker running at {Time}, {Count} stores in DB", DateTimeOffset.Now, storeCount);
             }
-            await Task.Delay(1000, stoppingToken);
+
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 }
