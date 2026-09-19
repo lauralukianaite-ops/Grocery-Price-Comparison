@@ -18,6 +18,10 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> GetPriceHistory(int itemId)
     {
         var history = await _itemPriceHistoryService.GetPriceHistoryAsync(itemId);
+        if (history is null)
+        {
+            return NotFound();
+        }
         return Ok(history);
     }
 }
