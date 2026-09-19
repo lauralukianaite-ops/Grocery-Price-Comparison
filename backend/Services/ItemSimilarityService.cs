@@ -1,10 +1,56 @@
+using backend.Data;
 using backend.DTOs;
 using backend.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-public class ItemSimilarityService
+public class SimilarItemsResponseDto
 {
+    public int BaseItemId { get; set; }
+    public string BaseItemName { get; set; } = string.Empty;
+    public double Threshold { get; set; }
+    public List<SimilarItemDto> SimilarItems { get; set; } = new();
+    public int Count => SimilarItems.Count;
+}
+
+public class ItemSimilarityService : IItemSimilarityService
+{
+    private readonly AppDbContext? _context;
+
+    public ItemSimilarityService()
+    {
+    }
+
+    public ItemSimilarityService(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<SimilarItemsResponseDto?> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
+    {
+        if (_context is null)
+            throw new InvalidOperationException("Database context is not configured for similarity lookup.");
+
+        if (threshold < 0 || threshold > 1)
+            throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
+
+        var baseItem = await _context.Items.FindAsync(itemId);
+        if (baseItem is null)
+            return null;
+
+        var allItems = await _context.Items.ToListAsync();
+        var similarItems = FindSimilarItems(baseItem, allItems, threshold);
+
+        return new SimilarItemsResponseDto
+        {
+            BaseItemId = itemId,
+            BaseItemName = baseItem.Name,
+            Threshold = threshold,
+            SimilarItems = similarItems
+        };
+    }
+
     // Finds items similar to the base item using Tri-gram similarity algorithm
     public List<SimilarItemDto> FindSimilarItems(Item baseItem, IEnumerable<Item> allItems, double threshold = 0.3)
     {
