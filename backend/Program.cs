@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 DotNetEnv.Env.Load();
@@ -26,6 +27,7 @@ else
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 
 const string FrontendCors = "Frontend";
 builder.Services.AddCors(options =>
