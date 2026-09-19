@@ -21,7 +21,7 @@ else
 {
     connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? builder.Configuration["DATABASE_URL"]
-        ?? throw new InvalidOperationException("Data base connection details was not found in .env file!");
+        ?? throw new InvalidOperationException("Database connection details not found in .env file!");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -40,6 +40,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Seed database with initial data
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbSeeder.Initialize(dbContext);
+}
 
 if (app.Environment.IsDevelopment())
 {
