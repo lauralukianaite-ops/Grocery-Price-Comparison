@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Services\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="MappingExtensions\" />
   </ItemGroup>
 
 </Project>
