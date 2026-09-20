@@ -12,7 +12,7 @@ public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : Ba
 
                 try
                 {
-                    var products = await scraper.ScrapeProductsAsync("pienas", stoppingToken);
+                    var products = await scraper.ScrapeProductsAsync(stoppingToken);
 
                     foreach (var product in products)
                     {

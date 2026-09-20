@@ -6,37 +6,68 @@ namespace scraper;
 public class BarboraScraper : IScraper
 {
     public string StoreName => "Barbora";
+    List<string> Urls = ["https://barbora.lt/darzoves-ir-vaisiai",
+                        "https://barbora.lt/pieno-gaminiai-kiausiniai-ir-majonezas", 
+                        "https://barbora.lt/duonos-gaminiai-ir-konditerija",
+                        "https://barbora.lt/mesa-zuvis-ir-kulinarija",
+                        "https://barbora.lt/bakaleja",
+                        "https://barbora.lt/saldytas-maistas",
+                        "https://barbora.lt/gerimai",
+                        "https://barbora.lt/kudikiu-ir-vaiku-prekes",
+                        "https://barbora.lt/kosmetika-ir-higiena",
+                        "https://barbora.lt/svaros-ir-gyvunu-prekes",
+                        "https://barbora.lt/namai-ir-laisvalaikis"];
 
-    public async Task<List<ProductData>> ScrapeProductsAsync(string searchQuery, CancellationToken cancellationToken = default)
+    public async Task<List<ProductData>> ScrapeProductsAsync(CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = false });
+        await using var browser = await playwright.Chromium.LaunchAsync(new() 
+        { 
+            Headless = false,
+            Args = new[] 
+            { 
+                "--disable-blink-features=AutomationControlled",
+                "--start-maximized" 
+            }
+        });
         var page = await browser.NewPageAsync();
 
-        // 1. opens site and takes HTML answer
-        
-        //var response = await page.GotoAsync($"https://barbora.lt/paieska?q={searchQuery}", new PageGotoOptions
-        var response = await page.GotoAsync($"https://barbora.lt/gera-kaina", new PageGotoOptions
+        List<ProductData> allProducts = new List<ProductData>();
+        foreach(string url in Urls)
         {
+            // 1. opens site and takes HTML answer
+            var response = await page.GotoAsync(url, new PageGotoOptions
+            {
             WaitUntil = WaitUntilState.DOMContentLoaded
-        });
+            });
+            if (response == null) continue;
 
-        if (response == null) return new List<ProductData>();
+            var html = await response.TextAsync();
 
-        var html = await response.TextAsync();
+            // 2. cuts JSON between '[' and ']'            
+            int markerIndex = html.IndexOf("window.b_productList = [");
+            if (markerIndex == -1){continue;}
 
-        // 2. cuts JSON between '[' and ']'
-        // for product list "window.b_productList", for single product "window.product"
-        int start = html.IndexOf("window.b_productList = [") + "window.b_productList = ".Length;
-        int end = html.IndexOf("];", start) + 1;
-        var jsonText = html[start..end];
+            int start = markerIndex + "window.b_productList = ".Length;
+            int end = html.IndexOf("];", start);
+            if (end == -1 || end <= start){continue;}
 
-        // 3. takes only title and price
-        using var doc = JsonDocument.Parse(jsonText);
-        return doc.RootElement.EnumerateArray().Select(p => new ProductData
-        {
+            var jsonText = html[start..(end + 1)];
+
+            // 3. takes only title and price
+            using var doc = JsonDocument.Parse(jsonText);
+
+            var products = doc.RootElement.EnumerateArray().Select(p => new ProductData
+            {
             Title = p.GetProperty("title").GetString()!,
             Price = p.GetProperty("price").GetDecimal()
-        }).ToList();
+            }).ToList();
+            if (products.Count == 0)break; //PATAISYTI!!!!!! CIA TURI PASIKESIT LINKAS
+
+            allProducts.AddRange(products);
+
+            await Task.Delay(10, cancellationToken);
+        }
+        return allProducts;
     }
 }
