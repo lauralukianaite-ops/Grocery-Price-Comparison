@@ -15,6 +15,7 @@ builder.Services.Configure<GlobalSettings>(
 
 builder.Services.AddTransient<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
 builder.Services.AddHostedService<Worker>();
+builder.Services.AddTransient<IScraper, BarboraScraper>();
 
 var host = builder.Build();
 
