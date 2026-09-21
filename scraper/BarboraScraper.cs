@@ -31,42 +31,56 @@ public class BarboraScraper : IScraper
             }
         });
         var page = await browser.NewPageAsync();
+        await page.AddInitScriptAsync("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
+        Random rand = new Random();
         List<ProductData> allProducts = new List<ProductData>();
+
         foreach(string url in Urls)
         {
-            // 1. opens site and takes HTML answer
-            var response = await page.GotoAsync(url, new PageGotoOptions
+            int pageUrl = 1;
+
+            // breaks when empty page of an url is reached
+            while (true)
             {
-            WaitUntil = WaitUntilState.DOMContentLoaded
-            });
-            if (response == null) continue;
+                // 1. opens site and takes HTML answer
+                var response = await page.GotoAsync(url + $"?page={pageUrl}", new PageGotoOptions
+                {
+                WaitUntil = WaitUntilState.DOMContentLoaded
+                });
+                if (response == null) continue;
 
-            var html = await response.TextAsync();
+                var html = await response.TextAsync();
 
-            // 2. cuts JSON between '[' and ']'            
-            int markerIndex = html.IndexOf("window.b_productList = [");
-            if (markerIndex == -1){continue;}
+                // 2. cuts JSON between '[' and ']'            
+                int markerIndex = html.IndexOf("window.b_productList = [");
+                if (markerIndex == -1){continue;}
 
-            int start = markerIndex + "window.b_productList = ".Length;
-            int end = html.IndexOf("];", start);
-            if (end == -1 || end <= start){continue;}
+                int start = markerIndex + "window.b_productList = ".Length;
+                int end = html.IndexOf("];", start);
+                if (end == -1 || end <= start){continue;}
 
-            var jsonText = html[start..(end + 1)];
+                var jsonText = html[start..(end + 1)];
 
-            // 3. takes only title and price
-            using var doc = JsonDocument.Parse(jsonText);
+                // 3. takes jsonText
+                using var doc = JsonDocument.Parse(jsonText);
 
-            var products = doc.RootElement.EnumerateArray().Select(p => new ProductData
-            {
-            Title = p.GetProperty("title").GetString()!,
-            Price = p.GetProperty("price").GetDecimal()
-            }).ToList();
-            if (products.Count == 0)break; //PATAISYTI!!!!!! CIA TURI PASIKESIT LINKAS
+                // 4. takes only title and price
+                var products = doc.RootElement.EnumerateArray().Select(p => new ProductData
+                {
+                Title = p.GetProperty("title").GetString()!,
+                Price = p.GetProperty("price").GetDecimal()
+                }).ToList();
 
-            allProducts.AddRange(products);
+                // 5. if page is empty, goes to next url.
+                if (products.Count == 0)break;
 
-            await Task.Delay(10, cancellationToken);
+                allProducts.AddRange(products);
+                pageUrl++;
+
+                // pause
+                await Task.Delay(rand.Next(2000, 3500), cancellationToken);
+            }
         }
         return allProducts;
     }
