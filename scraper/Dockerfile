@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY scrapper.csproj ./
+COPY scraper.csproj ./
 RUN dotnet restore
 
 COPY . ./

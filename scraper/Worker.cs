@@ -1,6 +1,11 @@
+using backend.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace scraper;
 
+
 public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : BackgroundService
+
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -28,6 +33,7 @@ public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : Ba
                 }
             }
             await Task.Delay(1000000, stoppingToken);
+
         }
     }
 }
