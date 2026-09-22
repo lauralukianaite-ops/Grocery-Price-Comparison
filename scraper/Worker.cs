@@ -6,6 +6,7 @@ public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : Ba
     {
         while (!stoppingToken.IsCancellationRequested)
         {
+            // goes through all scrapers
             foreach (var scraper in scrapers)
             {
                 logger.LogInformation("Opening {Store}...", scraper.StoreName);
