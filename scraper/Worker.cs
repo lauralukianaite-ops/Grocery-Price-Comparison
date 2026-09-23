@@ -1,22 +1,39 @@
-namespace scrapper;
-
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
 
-public class Worker(ILogger<Worker> logger, IServiceScopeFactory scopeFactory) : BackgroundService
+namespace scraper;
+
+
+public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : BackgroundService
+
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            using (var scope = scopeFactory.CreateScope())
+            // goes through all scrapers
+            foreach (var scraper in scrapers)
             {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                var storeCount = await db.Stores.CountAsync(stoppingToken);
-                logger.LogInformation("Worker running at {Time}, {Count} stores in DB", DateTimeOffset.Now, storeCount);
-            }
+                logger.LogInformation("Opening {Store}...", scraper.StoreName);
 
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                try
+                {
+                    var products = await scraper.ScrapeProductsAsync(stoppingToken);
+
+                    foreach (var product in products)
+                    {
+                        logger.LogInformation("[{Store}] {Title} | {Price} €", scraper.StoreName, product.Title, product.Price);
+                    }
+
+                    logger.LogInformation("{Store} found: {count}", scraper.StoreName, products.Count);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Klaida renkant duomenis iš {Store}", scraper.StoreName);
+                }
+            }
+            await Task.Delay(1000000, stoppingToken);
+
         }
     }
 }
