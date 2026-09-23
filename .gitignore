@@ -3,6 +3,14 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Specific .NET ir Scraper build catalog
+**/obj/
+**/bin/
+backend/obj/
+backend/bin/
+scraper/obj/
+scraper/bin/
+
 # dotenv files
 .env
 scraper/.env
