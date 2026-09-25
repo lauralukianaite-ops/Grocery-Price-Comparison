@@ -7,11 +7,7 @@ namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
-    private readonly AppDbContext? _context;
-
-    public ItemSimilarityService()
-    {
-    }
+    private readonly AppDbContext _context;
 
     public ItemSimilarityService(AppDbContext context)
     {
@@ -20,9 +16,6 @@ public class ItemSimilarityService : IItemSimilarityService
 
     public async Task<SimilarItemsResponseDto?> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
     {
-        if (_context is null)
-            throw new InvalidOperationException("Database context is not configured for similarity lookup.");
-
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
 
