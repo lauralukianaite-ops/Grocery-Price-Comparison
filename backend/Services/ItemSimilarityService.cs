@@ -14,14 +14,14 @@ public class ItemSimilarityService : IItemSimilarityService
         _context = context;
     }
 
-    public async Task<SimilarItemsResponseDto?> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
 
         var baseItem = await _context.Items.FindAsync(itemId);
         if (baseItem is null)
-            return null;
+            throw new KeyNotFoundException($"Item with id {itemId} not found.");
 
         var allItems = await _context.Items.ToListAsync();
         var similarItems = FindSimilarItems(baseItem, allItems, threshold);
