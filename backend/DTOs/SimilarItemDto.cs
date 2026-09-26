@@ -5,5 +5,5 @@ public record SimilarItemDto(
     string Name,
     string Store,
     double Price,
-    double SimilarityScore
-);
+    decimal? RetailPrice,
+    double SimilarityScore);

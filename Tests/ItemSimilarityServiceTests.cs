@@ -16,10 +16,10 @@ public class ItemSimilarityServiceTests
         var searchQuery = "Pieno";
         var items = new List<Item>
         {
-            new Item { Id = 2, Name = "Pienas 2.5% (500ml)", Prices = new List<Price> { new Price { Amount = 1.29m, RecordedAt = DateTime.Now, Store = new Store { Name = "Maxima" } } } },
-            new Item { Id = 3, Name = "Skystas Pienas 2.5% 1L", Prices = new List<Price> { new Price { Amount = 1.49m, RecordedAt = DateTime.Now, Store = new Store { Name = "Iki" } } } },
-            new Item { Id = 4, Name = "Duona šviesi", Prices = new List<Price> { new Price { Amount = 1.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Rimi" } } } },
-            new Item { Id = 5, Name = "Pienas 3.5% 1l", Prices = new List<Price> { new Price { Amount = 1.59m, RecordedAt = DateTime.Now, Store = new Store { Name = "Barbora" } } } }
+            new Item { Id = 2, Name = "Pienas 2.5% (500ml)", Prices = new List<Price> { new Price { Cost = 1.29m, RecordedAt = DateTime.Now, Store = new Store { Name = "Maxima" } } } },
+            new Item { Id = 3, Name = "Skystas Pienas 2.5% 1L", Prices = new List<Price> { new Price { Cost = 1.49m, RecordedAt = DateTime.Now, Store = new Store { Name = "Iki" } } } },
+            new Item { Id = 4, Name = "Duona šviesi", Prices = new List<Price> { new Price { Cost = 1.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Rimi" } } } },
+            new Item { Id = 5, Name = "Pienas 3.5% 1l", Prices = new List<Price> { new Price { Cost = 1.59m, RecordedAt = DateTime.Now, Store = new Store { Name = "Barbora" } } } }
         };
 
         var results = new ItemSimilarityService(null).FindSimilarItems(searchQuery, items, 0.1);
@@ -42,9 +42,9 @@ public class ItemSimilarityServiceTests
         var searchQuery = "Prancūziškas česnakinis batonas";
         var items = new List<Item>
         {
-            new Item { Id = 1, Name = "Prancūziškas česnakinis batonas", Prices = new List<Price> { new Price { Amount = 2.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Maxima" } } }},
-            new Item { Id = 2, Name = "Batonas prancūziškas česnakinis", Prices = new List<Price> { new Price { Amount = 2.10m, RecordedAt = DateTime.Now, Store = new Store { Name = "Iki" } } }},
-            new Item { Id = 3, Name = "Samsung ultra hd max pro phone", Prices = new List<Price> { new Price { Amount = 999.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Lidl" } } }}
+            new Item { Id = 1, Name = "Prancūziškas česnakinis batonas", Prices = new List<Price> { new Price { Cost = 2.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Maxima" } } }},
+            new Item { Id = 2, Name = "Batonas prancūziškas česnakinis", Prices = new List<Price> { new Price { Cost = 2.10m, RecordedAt = DateTime.Now, Store = new Store { Name = "Iki" } } }},
+            new Item { Id = 3, Name = "Samsung ultra hd max pro phone", Prices = new List<Price> { new Price { Cost = 999.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Lidl" } } }}
         };
 
         var results = new ItemSimilarityService(null).FindSimilarItems(searchQuery, items, 0.8);
@@ -86,11 +86,11 @@ public class ItemSimilarityServiceTests
                 Name = "Apelsinų sultys 100%",
                 Prices = new List<Price>
                 {
-                    new Price { Amount = 0.99m, RecordedAt = DateTime.Now.AddDays(-10), Store = new Store { Name = "Barbora" } },
-                    new Price { Amount = 2.49m, RecordedAt = DateTime.Now, Store = new Store { Name = "Barbora" } },
+                    new Price { Cost = 0.99m, RecordedAt = DateTime.Now.AddDays(-10), Store = new Store { Name = "Barbora" } },
+                    new Price { Cost = 2.49m, RecordedAt = DateTime.Now, Store = new Store { Name = "Barbora" } },
 
-                    new Price { Amount = 2.99m, RecordedAt = DateTime.Now.AddDays(-5), Store = new Store { Name = "Iki" } },
-                    new Price { Amount = 2.59m, RecordedAt = DateTime.Now.AddDays(-10), Store = new Store { Name = "Iki" } }
+                    new Price { Cost = 2.99m, RecordedAt = DateTime.Now.AddDays(-5), Store = new Store { Name = "Iki" } },
+                    new Price { Cost = 2.59m, RecordedAt = DateTime.Now.AddDays(-10), Store = new Store { Name = "Iki" } }
                 }
             },
         };
