@@ -33,7 +33,6 @@ public class ItemSimilarityService : IItemSimilarityService
         };
     }
 
-    // Finds items similar to the base item using Tri-gram similarity algorithm
     public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
     {
         var results = new List<SimilarItemDto>();
@@ -42,7 +41,6 @@ public class ItemSimilarityService : IItemSimilarityService
         {
             double similarity = CalculateTrigramSimilarity(itemName, item.Name);
 
-            // Only include items above threshold
             if (similarity >= threshold)
             {
                 results.Add(new SimilarItemDto(
@@ -54,37 +52,29 @@ public class ItemSimilarityService : IItemSimilarityService
             }
         }
 
-        // Sort by similarity score descending
         return results.OrderByDescending(x => x.SimilarityScore).ToList();
     }
 
-    // Calculates similarity between two strings using Tri-gram algorithm
     private double CalculateTrigramSimilarity(string str1, string str2)
     {
         if (string.IsNullOrEmpty(str1) || string.IsNullOrEmpty(str2))
             return 0.0;
 
-        // Normalize strings: lowercase and remove extra spaces
         str1 = str1.ToLower().Trim();
         str2 = str2.ToLower().Trim();
 
-        // Extract tri-grams
         var trigrams1 = ExtractTrigrams(str1);
         var trigrams2 = ExtractTrigrams(str2);
 
         if (trigrams1.Count == 0 || trigrams2.Count == 0)
             return 0.0;
 
-        // Count matching tri-grams
         int matches = trigrams1.Intersect(trigrams2).Count();
 
-        // Calculate Jaccard similarity: intersection / union
         int union = trigrams1.Union(trigrams2).Count();
 
         return (double)matches / union;
     }
-
-    // Extracts all tri-grams (3-character sequences) from a string
     private HashSet<string> ExtractTrigrams(string str)
     {
         var trigrams = new HashSet<string>();
