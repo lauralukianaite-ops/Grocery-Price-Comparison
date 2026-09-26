@@ -39,13 +39,13 @@ public static class DbSeeder
 
         var prices = new List<Price>
         {
-            new Price { StoreId = stores[0].Id, ItemId = items[0].Id, Amount = 1.49m, RecordedAt = DateTime.UtcNow },
-            new Price { StoreId = stores[0].Id, ItemId = items[1].Id, Amount = 2.29m, RecordedAt = DateTime.UtcNow },
-            new Price { StoreId = stores[0].Id, ItemId = items[2].Id, Amount = 0.89m, RecordedAt = DateTime.UtcNow },
+            new Price { StoreId = stores[0].Id, ItemId = items[0].Id, Cost = 1.49m, RetailCost = 1.80m, RecordedAt = DateTime.UtcNow },
+            new Price { StoreId = stores[0].Id, ItemId = items[1].Id, Cost = 2.29m, RetailCost = 2.80m, RecordedAt = DateTime.UtcNow },
+            new Price { StoreId = stores[0].Id, ItemId = items[2].Id, Cost = 0.89m, RetailCost = 1.20m, RecordedAt = DateTime.UtcNow },
             
-            new Price { StoreId = stores[1].Id, ItemId = items[0].Id, Amount = 1.39m, RecordedAt = DateTime.UtcNow },
-            new Price { StoreId = stores[1].Id, ItemId = items[1].Id, Amount = 2.19m, RecordedAt = DateTime.UtcNow },
-            new Price { StoreId = stores[1].Id, ItemId = items[2].Id, Amount = 0.99m, RecordedAt = DateTime.UtcNow }
+            new Price { StoreId = stores[1].Id, ItemId = items[0].Id, Cost = 1.39m, RetailCost = null, RecordedAt = DateTime.UtcNow },
+            new Price { StoreId = stores[1].Id, ItemId = items[1].Id, Cost = 2.19m, RetailCost = 2.80m, RecordedAt = DateTime.UtcNow },
+            new Price { StoreId = stores[1].Id, ItemId = items[2].Id, Cost = 0.99m, RetailCost = null, RecordedAt = DateTime.UtcNow }
         };
 
         database.Prices.AddRange(prices);
