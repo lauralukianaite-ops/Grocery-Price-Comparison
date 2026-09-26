@@ -26,10 +26,10 @@ public class ItemsController : ControllerBase
         return Ok(history);
     }
 
-    [HttpGet("{id}/similar")]
-    public async Task<IActionResult> GetSimilarItems(int id, [FromQuery] double threshold = 0.3)
+    [HttpGet("search/{itemName}")]
+    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = 0.3)
     {
-        var similarItems = await _similarityService.GetSimilarItemsAsync(id, threshold);
+        var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
         return Ok(similarItems);
     }
 }

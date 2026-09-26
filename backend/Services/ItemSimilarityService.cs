@@ -14,39 +14,33 @@ public class ItemSimilarityService : IItemSimilarityService
         _context = context;
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.3)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
 
-        var baseItem = await _context.Items.FindAsync(itemId);
-        if (baseItem is null)
-            throw new KeyNotFoundException($"Item with id {itemId} not found.");
+        if (string.IsNullOrEmpty(itemName))
+            throw new ArgumentException("Item name can't be empty.");
 
         var allItems = await _context.Items.ToListAsync();
-        var similarItems = FindSimilarItems(baseItem, allItems, threshold);
+        var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
         {
-            BaseItemId = itemId,
-            BaseItemName = baseItem.Name,
+            BaseItemName = itemName,
             Threshold = threshold,
             SimilarItems = similarItems
         };
     }
 
     // Finds items similar to the base item using Tri-gram similarity algorithm
-    public List<SimilarItemDto> FindSimilarItems(Item baseItem, IEnumerable<Item> allItems, double threshold = 0.3)
+    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
     {
         var results = new List<SimilarItemDto>();
 
         foreach (var item in allItems)
         {
-            // Don't compare with itself
-            if (item.Id == baseItem.Id)
-                continue;
-
-            double similarity = CalculateTrigramSimilarity(baseItem.Name, item.Name);
+            double similarity = CalculateTrigramSimilarity(itemName, item.Name);
 
             // Only include items above threshold
             if (similarity >= threshold)
