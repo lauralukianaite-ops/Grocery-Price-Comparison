@@ -11,21 +11,25 @@ public class Worker(ILogger<Worker> logger, IEnumerable<IScraper> scrapers) : Ba
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // goes through all scrapers
+            // 1. goes through all scrapers
             foreach (var scraper in scrapers)
             {
                 logger.LogInformation("Opening {Store}...", scraper.StoreName);
 
                 try
                 {
-                    var products = await scraper.ScrapeProductsAsync(stoppingToken);
+                    int count = 0;
 
-                    foreach (var product in products)
+                    // Receives data stream
+                    await foreach (var product in scraper.ScrapeProductsAsync(stoppingToken))
                     {
+                        count++;
                         logger.LogInformation("[{Store}] {Title} | {Price} €", scraper.StoreName, product.Title, product.Price);
+
+                        // HERE save to base!!!!!
                     }
 
-                    logger.LogInformation("{Store} found: {count}", scraper.StoreName, products.Count);
+                    logger.LogInformation("{Store} found: {count}", scraper.StoreName, count);                
                 }
                 catch (Exception ex)
                 {

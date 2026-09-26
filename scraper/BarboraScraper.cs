@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Microsoft.Playwright;
 
@@ -18,7 +19,8 @@ public class BarboraScraper : IScraper
                         "https://barbora.lt/svaros-ir-gyvunu-prekes",
                         "https://barbora.lt/namai-ir-laisvalaikis"];
 
-    public async Task<List<ProductData>> ScrapeProductsAsync(CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<ProductData> ScrapeProductsAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() 
@@ -34,8 +36,7 @@ public class BarboraScraper : IScraper
         await page.AddInitScriptAsync("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
         Random rand = new Random();
-        List<ProductData> allProducts = new List<ProductData>();
-
+        
         foreach(string url in Urls)
         {
             int pageUrl = 1;
@@ -75,13 +76,16 @@ public class BarboraScraper : IScraper
                 // 5. if page is empty, goes to next url.
                 if (products.Count == 0)break;
 
-                allProducts.AddRange(products);
+                foreach (var product in products)
+                {
+                    yield return product;
+                }
+                
                 pageUrl++;
 
                 // pause
                 await Task.Delay(rand.Next(2000, 3500), cancellationToken);
             }
         }
-        return allProducts;
     }
 }
