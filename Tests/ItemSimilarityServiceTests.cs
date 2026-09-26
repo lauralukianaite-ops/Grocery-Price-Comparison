@@ -99,14 +99,14 @@ public class ItemSimilarityServiceTests
         Assert.Equal(2, results.Count);
         
         var barboraResult = results.First(r => r.Store == "Barbora");
-        Assert.Equal(2.49, barboraResult.Price);
+        Assert.Equal(2.49, barboraResult.Cost);
 
         var ikiResult = results.First(r => r.Store == "Iki");
-        Assert.Equal(2.99, ikiResult.Price);
+        Assert.Equal(2.99, ikiResult.Cost);
 
         foreach (var r in results)
         {
-            Console.WriteLine($"  [Similarity index: {r.SimilarityScore:F2}] Id: {r.Id} - {r.Name}; Store: {r.Store}; Price: {r.Price}");
+            Console.WriteLine($"  [Similarity index: {r.SimilarityScore:F2}] Id: {r.Id} - {r.Name}; Store: {r.Store}; Price: {r.Cost}");
         }
     }
 }
