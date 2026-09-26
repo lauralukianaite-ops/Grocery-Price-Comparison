@@ -5,108 +5,89 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-public class SimilarItemsResponseDto
-{
-    public int BaseItemId { get; set; }
-    public string BaseItemName { get; set; } = string.Empty;
-    public double Threshold { get; set; }
-    public List<SimilarItemDto> SimilarItems { get; set; } = new();
-    public int Count => SimilarItems.Count;
-}
-
 public class ItemSimilarityService : IItemSimilarityService
 {
-    private readonly AppDbContext? _context;
-
-    public ItemSimilarityService()
-    {
-    }
+    private readonly AppDbContext _context;
 
     public ItemSimilarityService(AppDbContext context)
     {
         _context = context;
     }
 
-    public async Task<SimilarItemsResponseDto?> GetSimilarItemsAsync(int itemId, double threshold = 0.3)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.3)
     {
-        if (_context is null)
-            throw new InvalidOperationException("Database context is not configured for similarity lookup.");
-
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
 
-        var baseItem = await _context.Items.FindAsync(itemId);
-        if (baseItem is null)
-            return null;
+        if (string.IsNullOrEmpty(itemName))
+            throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _context.Items.ToListAsync();
-        var similarItems = FindSimilarItems(baseItem, allItems, threshold);
+        var allItems = await _context.Items
+            .Include(i => i.Prices)
+            .ThenInclude(p => p.Store)
+            .ToListAsync();
+        var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
         {
-            BaseItemId = itemId,
-            BaseItemName = baseItem.Name,
+            BaseItemName = itemName,
             Threshold = threshold,
             SimilarItems = similarItems
         };
     }
 
-    // Finds items similar to the base item using Tri-gram similarity algorithm
-    public List<SimilarItemDto> FindSimilarItems(Item baseItem, IEnumerable<Item> allItems, double threshold = 0.3)
+    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
     {
         var results = new List<SimilarItemDto>();
 
         foreach (var item in allItems)
         {
-            // Don't compare with itself
-            if (item.Id == baseItem.Id)
-                continue;
+            double similarity = CalculateTrigramSimilarity(itemName, item.Name);
 
-            double similarity = CalculateTrigramSimilarity(baseItem.Name, item.Name);
-
-            // Only include items above threshold
             if (similarity >= threshold)
             {
-                results.Add(new SimilarItemDto(
-                    Id: item.Id,
-                    Name: item.Name,
-                    Category: string.Empty,
-                    SimilarityScore: Math.Round(similarity, 2)
-                ));
+                var latestPricesPerStore = item.Prices
+                .Where(p => p.Store != null)
+                .GroupBy(p => p.Store.Name)
+                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault())
+                .Where(p => p != null);
+
+                foreach (var latestPrice in latestPricesPerStore)
+                {
+                    results.Add(new SimilarItemDto(
+                        Id: item.Id,
+                        Name: item.Name,
+                        Store: latestPrice.Store.Name,
+                        Price: (double)latestPrice.Amount,
+                        SimilarityScore: Math.Round(similarity, 2)
+                    ));
+                }
             }
         }
 
-        // Sort by similarity score descending
         return results.OrderByDescending(x => x.SimilarityScore).ToList();
     }
 
-    // Calculates similarity between two strings using Tri-gram algorithm
     private double CalculateTrigramSimilarity(string str1, string str2)
     {
         if (string.IsNullOrEmpty(str1) || string.IsNullOrEmpty(str2))
             return 0.0;
 
-        // Normalize strings: lowercase and remove extra spaces
         str1 = str1.ToLower().Trim();
         str2 = str2.ToLower().Trim();
 
-        // Extract tri-grams
         var trigrams1 = ExtractTrigrams(str1);
         var trigrams2 = ExtractTrigrams(str2);
 
         if (trigrams1.Count == 0 || trigrams2.Count == 0)
             return 0.0;
 
-        // Count matching tri-grams
         int matches = trigrams1.Intersect(trigrams2).Count();
 
-        // Calculate Jaccard similarity: intersection / union
         int union = trigrams1.Union(trigrams2).Count();
 
         return (double)matches / union;
     }
-
-    // Extracts all tri-grams (3-character sequences) from a string
     private HashSet<string> ExtractTrigrams(string str)
     {
         var trigrams = new HashSet<string>();

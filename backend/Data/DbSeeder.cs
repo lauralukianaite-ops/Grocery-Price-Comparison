@@ -9,13 +9,11 @@ public static class DbSeeder
     {
         database.Database.EnsureCreated();
 
-        // If data already exists, don't seed again
         if (database.Stores.Any() || database.Items.Any() || database.Prices.Any())
         {
             return;
         }
 
-        // Create stores
         var stores = new List<Store>
         {
             new Store { Name = "Barbora" },
@@ -25,7 +23,6 @@ public static class DbSeeder
         database.Stores.AddRange(stores);
         database.SaveChanges();
 
-        // Create items
         var items = new List<Item>
         {
             new Item { Name = "Pienas 2.5% (1L)" },
@@ -40,7 +37,6 @@ public static class DbSeeder
         database.Items.AddRange(items);
         database.SaveChanges();
 
-        // Create prices
         var prices = new List<Price>
         {
             new Price { StoreId = stores[0].Id, ItemId = items[0].Id, Amount = 1.49m, RecordedAt = DateTime.UtcNow },

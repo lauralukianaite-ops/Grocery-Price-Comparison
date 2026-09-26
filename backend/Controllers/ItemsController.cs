@@ -26,19 +26,10 @@ public class ItemsController : ControllerBase
         return Ok(history);
     }
 
-    /// Get similar items based on Tri-gram name similarity algorithm
-    [HttpGet("{id}/similar")]
-    public async Task<IActionResult> GetSimilarItems(int id, [FromQuery] double threshold = 0.4)
+    [HttpGet("search/{itemName}")]
+    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = 0.3)
     {
-        // Validate threshold
-        if (threshold < 0 || threshold > 1)
-            return BadRequest("Threshold must be between 0 and 1");
-
-        var similarItems = await _similarityService.GetSimilarItemsAsync(id, threshold);
-
-        if (similarItems is null)
-            return NotFound($"Item with id {id} not found");
-
+        var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
         return Ok(similarItems);
     }
 }
