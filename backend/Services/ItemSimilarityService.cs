@@ -58,8 +58,8 @@ public class ItemSimilarityService : IItemSimilarityService
                         Id: item.Id,
                         Name: item.Name,
                         Store: latestPrice.Store.Name,
-                        Price: (double)latestPrice.Cost,
-                        RetailPrice: latestPrice.RetailCost,
+                        Cost: (double)latestPrice.Cost,
+                        RetailCost: latestPrice.RetailCost,
                         SimilarityScore: Math.Round(similarity, 2)
                     ));
                 }

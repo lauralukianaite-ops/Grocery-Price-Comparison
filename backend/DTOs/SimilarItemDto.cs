@@ -4,6 +4,6 @@ public record SimilarItemDto(
     int Id,
     string Name,
     string Store,
-    double Price,
-    decimal? RetailPrice,
+    double Cost,
+    decimal? RetailCost,
     double SimilarityScore);
