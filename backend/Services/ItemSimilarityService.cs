@@ -22,7 +22,10 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _context.Items.ToListAsync();
+        var allItems = await _context.Items
+            .Include(i => i.Prices)
+            .ThenInclude(p => p.Store)
+            .ToListAsync();
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
@@ -43,12 +46,22 @@ public class ItemSimilarityService : IItemSimilarityService
 
             if (similarity >= threshold)
             {
-                results.Add(new SimilarItemDto(
-                    Id: item.Id,
-                    Name: item.Name,
-                    Category: string.Empty,
-                    SimilarityScore: Math.Round(similarity, 2)
-                ));
+                var latestPricesPerStore = item.Prices
+                .Where(p => p.Store != null)
+                .GroupBy(p => p.Store.Name)
+                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault())
+                .Where(p => p != null);
+
+                foreach (var latestPrice in latestPricesPerStore)
+                {
+                    results.Add(new SimilarItemDto(
+                        Id: item.Id,
+                        Name: item.Name,
+                        Store: latestPrice.Store.Name,
+                        Price: (double)latestPrice.Amount,
+                        SimilarityScore: Math.Round(similarity, 2)
+                    ));
+                }
             }
         }
 
