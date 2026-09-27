@@ -9,14 +9,16 @@ public class ItemsController : ControllerBase
 {
     private readonly IItemPriceHistoryService _itemPriceHistoryService;
     private readonly IItemSimilarityService _similarityService;
+    private readonly IFakeDiscountService _fakeDiscountService;
 
-    public ItemsController(IItemPriceHistoryService service, IItemSimilarityService similarityService)
+    public ItemsController(IItemPriceHistoryService service, IItemSimilarityService similarityService, IFakeDiscountService fakeDiscountService)
     {
         _itemPriceHistoryService = service;
         _similarityService = similarityService;
+        _fakeDiscountService = fakeDiscountService;
     }
 
-    [HttpGet("{itemId}/price-history")]
+    [HttpGet("{itemId:int}/price-history")]
     public async Task<IActionResult> GetPriceHistory(int itemId)
     {
         var history = await _itemPriceHistoryService.GetPriceHistoryAsync(itemId);
@@ -33,9 +35,10 @@ public class ItemsController : ControllerBase
         return Ok(similarItems);
     }
 
-    [HttpGet("{itemId}/discount-check")]
+    [HttpGet("{itemId:int}/discount-check")]
     public async Task<IActionResult> GetDiscountCheck(int itemId)
     {
-        return Ok();
+        var check = await _fakeDiscountService.GetDiscountFlag(itemId);
+        return Ok(check);
     }
 }
