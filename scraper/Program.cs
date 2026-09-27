@@ -28,7 +28,6 @@ else
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// 4. Registruojame skrapinerius ir Worker paslaugą
 builder.Services.AddTransient<IScraper, BarboraScraper>();
 builder.Services.AddHostedService<Worker>();
 
