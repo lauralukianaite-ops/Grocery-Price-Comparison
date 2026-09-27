@@ -1,4 +1,5 @@
 ﻿using backend.Data;
+using backend.DTOs;
 
 namespace backend.Services;
 
@@ -8,5 +9,10 @@ public class FakeDiscountService : IFakeDiscountService
     public FakeDiscountService(AppDbContext db)
     {
         _dbContext = db;
+    }
+
+    public async Task<DiscountFlagResponseDto> GetDiscountFlag(int itemId)
+    {
+        throw new NotImplementedException();
     }
 }
