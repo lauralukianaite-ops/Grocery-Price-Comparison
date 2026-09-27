@@ -23,7 +23,8 @@ public class ItemPriceHistoryService : IItemPriceHistoryService
             .Select(p => new PricePointDto(
                 p.StoreId,
                 p.Store.Name,
-                p.Amount,
+                p.Cost,
+                p.RetailCost,
                 p.RecordedAt
                 ))
             .ToListAsync();

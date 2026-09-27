@@ -23,7 +23,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Store>()
             .Property(s => s.Name).HasMaxLength(100);
         modelBuilder.Entity<Price>()
-            .Property(p => p.Amount).HasPrecision(10, 2);
+            .Property(p => p.Cost).HasPrecision(10, 2);
+        modelBuilder.Entity<Price>()
+            .Property(p => p.RetailCost).HasPrecision(10, 2);
         modelBuilder.Entity<Price>()
             .HasIndex(p => new { p.ItemId, p.StoreId, p.RecordedAt });
         modelBuilder.Entity<StoreLocation>()
