@@ -5,4 +5,5 @@ public record PricePointDto(
     string StoreName,
     decimal Cost,
     decimal? RetailCost,
-    DateTime RecordedAt);
+    DateTime RecordedAt
+);
