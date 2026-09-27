@@ -11,7 +11,7 @@ public class FakeDiscountService : IFakeDiscountService
         _dbContext = db;
     }
 
-    public async Task<DiscountFlagResponseDto> GetDiscountFlag(int itemId)
+    public async Task<List<DiscountFlagResponseDto>?> GetDiscountFlag(int itemId)
     {
         throw new NotImplementedException();
     }

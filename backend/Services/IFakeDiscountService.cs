@@ -4,5 +4,5 @@ namespace backend.Services;
 
 public interface IFakeDiscountService
 {
-    Task<DiscountFlagResponseDto> GetDiscountFlag(int itemId);
+    Task<List<DiscountFlagResponseDto>?> GetDiscountFlag(int itemId);
 }

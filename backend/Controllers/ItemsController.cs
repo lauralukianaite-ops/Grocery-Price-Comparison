@@ -22,9 +22,7 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> GetPriceHistory(int itemId)
     {
         var history = await _itemPriceHistoryService.GetPriceHistoryAsync(itemId);
-        if (history is null)
-            return NotFound();
-
+        if (history is null) return NotFound();
         return Ok(history);
     }
 
@@ -39,6 +37,7 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> GetDiscountCheck(int itemId)
     {
         var check = await _fakeDiscountService.GetDiscountFlag(itemId);
+        if (check is null) return NotFound();
         return Ok(check);
     }
 }
