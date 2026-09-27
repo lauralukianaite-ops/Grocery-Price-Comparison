@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using backend.Entities;
 using Microsoft.Playwright;
 
 namespace scraper;
@@ -19,7 +20,7 @@ public class BarboraScraper : IScraper
                         "https://barbora.lt/svaros-ir-gyvunu-prekes",
                         "https://barbora.lt/namai-ir-laisvalaikis"];
 
-    public async IAsyncEnumerable<ProductData> ScrapeProductsAsync(
+    public async IAsyncEnumerable<Item> ScrapeProductsAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
@@ -66,19 +67,27 @@ public class BarboraScraper : IScraper
                 // 3. takes jsonText
                 using var doc = JsonDocument.Parse(jsonText);
 
-                // 4. takes only title and price
-                var products = doc.RootElement.EnumerateArray().Select(p => new ProductData
+                // 4. scrapes item information
+                var items = doc.RootElement.EnumerateArray().Select(p => new Item
                 {
-                Title = p.GetProperty("title").GetString()!,
-                Price = p.GetProperty("price").GetDecimal()
+                    Name = p.GetProperty("title").GetString()!,
+                    Prices = new List<Price>
+                    {
+                        new Price
+                        {
+                            Cost = p.GetProperty("price").GetDecimal(),
+                            RecordedAt = DateTime.UtcNow
+                        }
+                    }
                 }).ToList();
 
                 // 5. if page is empty, goes to next url.
-                if (products.Count == 0)break;
+                if (items.Count == 0)break;
 
-                foreach (var product in products)
+                // 6. sends the information of items to worker
+                foreach (var item in items)
                 {
-                    yield return product;
+                    yield return item;
                 }
                 
                 pageUrl++;

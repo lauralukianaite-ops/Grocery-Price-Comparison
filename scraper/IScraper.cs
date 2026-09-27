@@ -1,9 +1,11 @@
+using backend.Entities;
+
 namespace scraper;
 
 public interface IScraper
 {
     string StoreName { get; }
     
-    IAsyncEnumerable<ProductData> ScrapeProductsAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<Item> ScrapeProductsAsync(CancellationToken cancellationToken = default);
 }
 
