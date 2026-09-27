@@ -76,6 +76,7 @@ public class BarboraScraper : IScraper
                         new Price
                         {
                             Cost = p.GetProperty("price").GetDecimal(),
+                            RetailCost = p.GetNullableDecimal("retail_price"),
                             RecordedAt = DateTime.UtcNow
                         }
                     }

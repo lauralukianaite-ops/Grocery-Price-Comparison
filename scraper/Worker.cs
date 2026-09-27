@@ -65,8 +65,13 @@ public class Worker(ILogger<Worker> logger,
                             await dbContext.SaveChangesAsync(stoppingToken);
                         }
 
-                        logger.LogInformation("[{Store}] {Title} | {Price} €", scraper.StoreName, scrapedItem.Name, scrapedPrice.Cost);
+                        logger.LogInformation("[{Store}] {Title} | {Price} € (Retail: {RetailPrice} €)", 
+                            scraper.StoreName, 
+                            scrapedItem.Name, 
+                            scrapedPrice.Cost, 
+                            scrapedPrice.RetailCost ?? 0);
                     }
+                    await dbContext.SaveChangesAsync(stoppingToken);
 
                     logger.LogInformation("{Store} found: {count}", scraper.StoreName, count);                
                 }
