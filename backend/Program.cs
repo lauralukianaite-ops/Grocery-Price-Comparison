@@ -29,6 +29,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
+builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
 
 const string FrontendCors = "Frontend";
 builder.Services.AddCors(options =>

@@ -4,5 +4,5 @@ namespace backend.Services;
 
 public interface IItemSimilarityService
 {
-    Task<SimilarItemsResponseDto?> GetSimilarItemsAsync(int itemId, double threshold = 0.4);
+    Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.3);
 }

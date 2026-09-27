@@ -3,4 +3,5 @@
     <Project Path="scraper/scraper.csproj" />
   </Folder>
   <Project Path="backend/backend.csproj" />
+  <Project Path="Tests/backend.Tests.csproj" />
 </Solution>

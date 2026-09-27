@@ -9,36 +9,35 @@ public class ItemsController : ControllerBase
 {
     private readonly IItemPriceHistoryService _itemPriceHistoryService;
     private readonly IItemSimilarityService _similarityService;
+    private readonly IFakeDiscountService _fakeDiscountService;
 
-    public ItemsController(IItemPriceHistoryService service, IItemSimilarityService similarityService)
+    public ItemsController(IItemPriceHistoryService service, IItemSimilarityService similarityService, IFakeDiscountService fakeDiscountService)
     {
         _itemPriceHistoryService = service;
         _similarityService = similarityService;
+        _fakeDiscountService = fakeDiscountService;
     }
 
-    [HttpGet("{itemId}/price-history")]
+    [HttpGet("{itemId:int}/price-history")]
     public async Task<IActionResult> GetPriceHistory(int itemId)
     {
         var history = await _itemPriceHistoryService.GetPriceHistoryAsync(itemId);
-        if (history is null)
-            return NotFound();
-
+        if (history is null) return NotFound();
         return Ok(history);
     }
 
-    /// Get similar items based on Tri-gram name similarity algorithm
-    [HttpGet("{id}/similar")]
-    public async Task<IActionResult> GetSimilarItems(int id, [FromQuery] double threshold = 0.4)
+    [HttpGet("search/{itemName}")]
+    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = 0.3)
     {
-        // Validate threshold
-        if (threshold < 0 || threshold > 1)
-            return BadRequest("Threshold must be between 0 and 1");
-
-        var similarItems = await _similarityService.GetSimilarItemsAsync(id, threshold);
-
-        if (similarItems is null)
-            return NotFound($"Item with id {id} not found");
-
+        var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
         return Ok(similarItems);
+    }
+
+    [HttpGet("{itemId:int}/discount-check")]
+    public async Task<IActionResult> GetDiscountCheck(int itemId)
+    {
+        var check = await _fakeDiscountService.GetDiscountFlag(itemId);
+        if (check is null) return NotFound();
+        return Ok(check);
     }
 }

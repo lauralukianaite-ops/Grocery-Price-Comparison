@@ -3,6 +3,7 @@
 public record PricePointDto(
     int StoreId,
     string StoreName,
-    decimal Amount,
+    decimal Cost,
+    decimal? RetailCost,
     DateTime RecordedAt
 );
