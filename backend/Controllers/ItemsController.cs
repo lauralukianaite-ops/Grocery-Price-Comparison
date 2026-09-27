@@ -32,4 +32,10 @@ public class ItemsController : ControllerBase
         var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
         return Ok(similarItems);
     }
+
+    [HttpGet("{itemId}/discount-check")]
+    public async Task<IActionResult> GetDiscountCheck(int itemId)
+    {
+        return Ok();
+    }
 }
