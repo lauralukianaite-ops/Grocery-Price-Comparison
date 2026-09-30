@@ -39,7 +39,7 @@ public class ItemSimilarityServiceTests
     [Fact]
     public void FindSimilarItems_WithHighTreshold()
     {
-        var searchQuery = "Prancūziškas česnakinis batonas";
+        var searchQuery = "Prancuziskas cesnakinis batonas";
         var items = new List<Item>
         {
             new Item { Id = 1, Name = "Prancūziškas česnakinis batonas", Prices = new List<Price> { new Price { Cost = 2.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Maxima" } } }},
