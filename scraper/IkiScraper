@@ -1,0 +1,20 @@
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using backend.Entities;
+using Microsoft.Playwright;
+
+namespace scraper;
+
+public class BarboraScraper : IScraper
+{
+    public string StoreName => "Iki";
+    List<string> Urls = [""
+        
+    ];
+
+    public async IAsyncEnumerable<Item> ScrapeProductsAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        
+    }
+}
