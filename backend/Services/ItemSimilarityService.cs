@@ -2,6 +2,10 @@ using backend.Data;
 using backend.DTOs;
 using backend.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace backend.Services;
 
@@ -14,7 +18,7 @@ public class ItemSimilarityService : IItemSimilarityService
         _context = context;
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.3)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
@@ -38,19 +42,22 @@ public class ItemSimilarityService : IItemSimilarityService
 
     public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
     {
+        var normalizedBaseItemName = RemoveDiacritics(itemName);
+        var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
         var results = new List<SimilarItemDto>();
 
         foreach (var item in allItems)
         {
-            double similarity = CalculateTrigramSimilarity(itemName, item.Name);
+            var normalizedItemName = RemoveDiacritics(item.Name);
+            double similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
+            bool containsAnyWord = queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
 
-            if (similarity >= threshold)
+            if (similarity >= threshold || containsAnyWord)
             {
                 var latestPricesPerStore = item.Prices
                 .Where(p => p.Store != null)
                 .GroupBy(p => p.Store.Name)
-                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault())
-                .Where(p => p != null);
+                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault());
 
                 foreach (var latestPrice in latestPricesPerStore)
                 {
@@ -101,5 +108,24 @@ public class ItemSimilarityService : IItemSimilarityService
         }
 
         return trigrams;
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
     }
 }
