@@ -12,8 +12,9 @@ public class FakeDiscountServiceTests
 {
     private static readonly DateTime Today = new DateTime(2026, 9, 27);
 
-    private static Price P(int daysAgo, decimal cost, decimal? retail = null, int storeId = 1, string store = "Maxima")
-        => new Price
+    private static Price P(int daysAgo, decimal cost, decimal? retail = null, int storeId = 1, string store = "Barbora")
+    {
+        return new Price
         {
             StoreId = storeId,
             ItemId = 1,
@@ -22,14 +23,17 @@ public class FakeDiscountServiceTests
             RecordedAt = Today.AddDays(-daysAgo),
             Store = new Store { Id = storeId, Name = store }
         };
+    }
 
     private static List<DiscountFlagResponseDto> Run(List<Price> prices)
-        => new FakeDiscountService(null).FindDiscountFlags(prices, Today);
+    {
+        return new FakeDiscountService(null).FindDiscountFlags(prices, Today);
+    }
 
     [Fact]
     public void NoDiscountShown_ReturnsNothing()
     {
-        var prices = new List<Price> { P(0, 6m), P(0, 6m, 6m, storeId: 2, store: "Iki") };
+        var prices = new List<Price> { P(0, 6m), P(0, 6m, 6m, 2), P(0, 6m, 5m, 3) };
 
         var results = Run(prices);
 
