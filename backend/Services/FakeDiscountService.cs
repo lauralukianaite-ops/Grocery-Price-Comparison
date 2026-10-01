@@ -29,13 +29,11 @@ public class FakeDiscountService : IFakeDiscountService
 
     public List<DiscountFlagResponseDto> FindDiscountFlags(List<Price> prices, DateTime today)
     {
-
         var result = new List<DiscountFlagResponseDto>();
 
         foreach (var storePrices in prices.GroupBy(p => p.StoreId))
         {
-            // one price per calendar day, newest day first
-            var daily = storePrices
+            var daily = storePrices // one price per store per day, newest day first
                 .GroupBy(p => p.RecordedAt.Date)
                 .Select(g => g.OrderByDescending(p => p.RecordedAt).First())
                 .OrderByDescending(p => p.RecordedAt.Date)
@@ -44,45 +42,39 @@ public class FakeDiscountService : IFakeDiscountService
             if (daily.Count == 0)
                 continue;
 
-            // anchor on the latest scraped day, but only if it's fresh enough
             var current = daily[0];
             if ((today - current.RecordedAt.Date).TotalDays > 2)
                 continue;
 
-            // no discount shown in this store
             if (current.RetailCost is null || current.RetailCost <= current.Cost)
                 continue;
 
-            var retail = current.RetailCost.Value;
+            var retail = current.RetailCost.Value; // won't be null
             var expected = current.RecordedAt.Date;
             var index = 0;
 
             DiscountVerdict? verdict = null;
             decimal? typicalCost = null;
 
-            // phase 1: walk back over the current campaign — consecutive days
-            // advertising the same retail price. Deepening steps (higher past
-            // cost) are the lawful progressive discount; they don't count
-            // against the 30-day window.
+            // phase 1: walk back to the start of current discount.These days don't count. Deepening discounts are ok
             var campaignDays = 0;
             while (index < daily.Count && daily[index].RecordedAt.Date == expected)
             {
                 var day = daily[index];
                 if (day.RetailCost != retail || day.Cost < current.Cost)
-                    break;                          // campaign start found
+                    break; // discount start found
 
                 campaignDays++;
                 if (campaignDays >= 30)
                 {
-                    verdict = DiscountVerdict.False;    // promo running so long it IS the price
+                    verdict = DiscountVerdict.False;// discount running >30 days is the price
                     break;
                 }
                 index++;
                 expected = expected.AddDays(-1);
             }
 
-            // a same-campaign day cheaper than today: discount got shallower,
-            // so today's price already sold lower under the same "was" claim
+            // a same-discount day was cheaper than today = false
             if (verdict is null
                 && index < daily.Count
                 && daily[index].RecordedAt.Date == expected
@@ -92,8 +84,7 @@ public class FakeDiscountService : IFakeDiscountService
                 verdict = DiscountVerdict.False;
             }
 
-            // phase 2: 30 days before the campaign started. Every price counts
-            // toward the reference minimum, including earlier separate promos.
+            // phase 2: 30 days before the discount started.
             if (verdict is null)
             {
                 decimal? lowest = null;
@@ -101,13 +92,13 @@ public class FakeDiscountService : IFakeDiscountService
 
                 while (daysChecked < 30
                        && index < daily.Count
-                       && daily[index].RecordedAt.Date == expected)   // missing day ends the window
+                       && daily[index].RecordedAt.Date == expected)
                 {
                     var cost = daily[index].Cost;
 
                     if (cost <= current.Cost)
                     {
-                        verdict = DiscountVerdict.False;    // sold at/below today's price
+                        verdict = DiscountVerdict.False;
                         break;
                     }
                     if (lowest is null || cost < lowest)
@@ -121,11 +112,11 @@ public class FakeDiscountService : IFakeDiscountService
                 if (verdict is null)
                 {
                     if (daysChecked < 30)
-                        continue;   // window incomplete → nothing provable, no flag
+                        continue;
 
                     verdict = lowest >= retail
-                        ? DiscountVerdict.Real          // retail really was the 30-day low
-                        : DiscountVerdict.Exaggerated;  // it sold cheaper than the claimed "was"
+                        ? DiscountVerdict.Real 
+                        : DiscountVerdict.Exaggerated;
                     typicalCost = lowest;
                 }
             }
