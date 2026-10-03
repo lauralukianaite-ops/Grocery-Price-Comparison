@@ -50,25 +50,35 @@ public class BarboraScraper : IScraper
                 {
                 WaitUntil = WaitUntilState.DOMContentLoaded
                 });
-                if (response == null) continue;
+                if (response == null)
+                {
+                    pageUrl++;
+                    continue;
+                } 
 
                 var html = await response.TextAsync();
 
-                // 2. cuts JSON between '[' and ']'            
+                // 2. finds window.b_productList and cuts it and converts to JSON         
                 int markerIndex = html.IndexOf("window.b_productList = [");
-                if (markerIndex == -1){continue;}
+                if (markerIndex == -1){
+                    pageUrl++;
+                    continue;
+                } 
 
                 int start = markerIndex + "window.b_productList = ".Length;
                 int end = html.IndexOf("];", start);
-                if (end == -1 || end <= start){continue;}
+                if (end == -1 || end <= start){
+                    pageUrl++;
+                    continue;
+                } 
 
                 var jsonText = html[start..(end + 1)];
 
                 // 3. takes jsonText
-                using var doc = JsonDocument.Parse(jsonText);
+                var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
 
                 // 4. scrapes item information
-                var items = doc.RootElement.EnumerateArray().Select(p => new Item
+                var items = json.EnumerateArray().Select(p => new Item
                 {
                     Name = p.GetProperty("title").GetString()!,
                     Prices = new List<Price>
@@ -92,8 +102,6 @@ public class BarboraScraper : IScraper
                 }
                 
                 pageUrl++;
-
-                // pause
                 await Task.Delay(rand.Next(2000, 3500), cancellationToken);
             }
         }

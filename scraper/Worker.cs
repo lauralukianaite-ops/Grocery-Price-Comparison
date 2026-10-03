@@ -8,13 +8,12 @@ namespace scraper;
 public class Worker(ILogger<Worker> logger, 
     IEnumerable<IScraper> scrapers,
     IServiceScopeFactory scopeFactory) : BackgroundService
-
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            // 1. goes through all scrapers
+            // goes through all scrapers
             foreach (var scraper in scrapers)
             {
                 logger.LogInformation("Opening {Store}...", scraper.StoreName);
@@ -63,6 +62,7 @@ public class Worker(ILogger<Worker> logger,
                         if (count % 20 == 0)
                         {
                             await dbContext.SaveChangesAsync(stoppingToken);
+                            dbContext.ChangeTracker.Clear();
                         }
 
                         logger.LogInformation("[{Store}] {Title} | {Price} € (Retail: {RetailPrice} €)", 
@@ -71,6 +71,7 @@ public class Worker(ILogger<Worker> logger,
                             scrapedPrice.Cost, 
                             scrapedPrice.RetailCost ?? 0);
                     }
+                    // saves any remaining items (ex. scraper finds 21 items so 1 remains unsaved)
                     await dbContext.SaveChangesAsync(stoppingToken);
 
                     logger.LogInformation("{Store} found: {count}", scraper.StoreName, count);                
@@ -81,7 +82,6 @@ public class Worker(ILogger<Worker> logger,
                 }
             }
             await Task.Delay(1000000, stoppingToken);
-
         }
-    }
+    }  
 }
