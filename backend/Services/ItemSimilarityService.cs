@@ -1,8 +1,6 @@
-using backend.Data;
 using backend.DTOs;
 using backend.Entities;
 using backend.Repositories;
-using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
 
@@ -25,7 +23,7 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _itemsRepository.GetItemsWithStoreAsync();
+        var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
 
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
