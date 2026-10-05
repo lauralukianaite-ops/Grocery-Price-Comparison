@@ -21,7 +21,7 @@ public class ItemPriceHistoryService : IItemPriceHistoryService
             .OrderBy(p => p.RecordedAt)
             .Select(p => new PricePointDto(
                 p.StoreId,
-                p.Store.Name,
+                p.Store!.Name,
                 p.Cost,
                 p.RetailCost,
                 p.RecordedAt

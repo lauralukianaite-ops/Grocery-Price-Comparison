@@ -51,7 +51,7 @@ public class ItemSimilarityService : IItemSimilarityService
             {
                 var latestPricesPerStore = item.Prices
                 .Where(p => p.Store != null)
-                .GroupBy(p => p.Store.Name)
+                .GroupBy(p => p.Store!.Name)
                 .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault());
 
                 foreach (var latestPrice in latestPricesPerStore)
@@ -59,7 +59,7 @@ public class ItemSimilarityService : IItemSimilarityService
                     results.Add(new SimilarItemDto(
                         Id: item.Id,
                         Name: item.Name,
-                        Store: latestPrice.Store.Name,
+                        Store: latestPrice!.Store!.Name,
                         Cost: (double)latestPrice.Cost,
                         RetailCost: latestPrice.RetailCost,
                         SimilarityScore: Math.Round(similarity, 2)
