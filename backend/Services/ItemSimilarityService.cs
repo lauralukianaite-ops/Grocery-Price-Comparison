@@ -1,21 +1,20 @@
 using backend.Data;
 using backend.DTOs;
 using backend.Entities;
+using backend.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
-    private readonly AppDbContext _context;
+    private readonly IItemsRepository _itemsRepository;
 
-    public ItemSimilarityService(AppDbContext context)
+    public ItemSimilarityService(IItemsRepository itemsRepository)
     {
-        _context = context;
+        _itemsRepository = itemsRepository;
     }
 
     public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold)
@@ -26,10 +25,8 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _context.Items
-            .Include(i => i.Prices)
-            .ThenInclude(p => p.Store)
-            .ToListAsync();
+        var allItems = await _itemsRepository.GetItemsWithStoreAsync();
+
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto

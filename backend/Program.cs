@@ -1,6 +1,7 @@
 using backend.Data;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
+using backend.Repositories;
 
 DotNetEnv.Env.Load();
 
@@ -27,6 +28,7 @@ else
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddScoped<IItemsRepository,ItemsRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
 builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
