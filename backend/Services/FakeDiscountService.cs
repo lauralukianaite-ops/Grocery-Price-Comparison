@@ -1,28 +1,24 @@
-using backend.Data;
 using backend.DTOs;
 using backend.Entities;
-using Microsoft.EntityFrameworkCore;
+using backend.Repositories;
 
 namespace backend.Services;
 
 public class FakeDiscountService : IFakeDiscountService
 {
-    private readonly AppDbContext _dbContext;
+    private readonly IItemsRepository _itemsRepository;
 
-    public FakeDiscountService(AppDbContext db)
+    public FakeDiscountService(IItemsRepository itemsRepository)
     {
-        _dbContext = db;
+        _itemsRepository = itemsRepository;
     }
 
     public async Task<List<DiscountFlagResponseDto>?> GetDiscountFlag(int itemId)
     {
-        var itemExists = await _dbContext.Items.AnyAsync(i => i.Id == itemId);
+        var itemExists = await _itemsRepository.ExistsAsync(itemId);
         if (!itemExists) return null;
 
-        var prices = await _dbContext.Prices
-            .Where(p => p.ItemId == itemId)
-            .Include(p => p.Store)
-            .ToListAsync();
+        var prices = await _itemsRepository.GetPriceWithStoreByItemIdAsync(itemId);
 
         return FindDiscountFlags(prices, DateTime.UtcNow.Date);
     }

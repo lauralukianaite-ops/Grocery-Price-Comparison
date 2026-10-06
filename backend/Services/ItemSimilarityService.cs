@@ -1,21 +1,18 @@
-using backend.Data;
 using backend.DTOs;
 using backend.Entities;
-using Microsoft.EntityFrameworkCore;
+using backend.Repositories;
 using System.Globalization;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
-    private readonly AppDbContext _context;
+    private readonly IItemsRepository _itemsRepository;
 
-    public ItemSimilarityService(AppDbContext context)
+    public ItemSimilarityService(IItemsRepository itemsRepository)
     {
-        _context = context;
+        _itemsRepository = itemsRepository;
     }
 
     public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold)
@@ -26,10 +23,8 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _context.Items
-            .Include(i => i.Prices)
-            .ThenInclude(p => p.Store)
-            .ToListAsync();
+        var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
+
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
@@ -56,7 +51,7 @@ public class ItemSimilarityService : IItemSimilarityService
             {
                 var latestPricesPerStore = item.Prices
                 .Where(p => p.Store != null)
-                .GroupBy(p => p.Store.Name)
+                .GroupBy(p => p.Store!.Name)
                 .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault());
 
                 foreach (var latestPrice in latestPricesPerStore)
@@ -64,7 +59,7 @@ public class ItemSimilarityService : IItemSimilarityService
                     results.Add(new SimilarItemDto(
                         Id: item.Id,
                         Name: item.Name,
-                        Store: latestPrice.Store.Name,
+                        Store: latestPrice!.Store!.Name,
                         Cost: (double)latestPrice.Cost,
                         RetailCost: latestPrice.RetailCost,
                         SimilarityScore: Math.Round(similarity, 2)
