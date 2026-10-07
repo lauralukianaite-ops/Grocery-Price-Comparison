@@ -1,4 +1,6 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using backend.Entities;
 using Microsoft.Playwright;
 
 namespace scraper;
@@ -18,7 +20,8 @@ public class BarboraScraper : IScraper
                         "https://barbora.lt/svaros-ir-gyvunu-prekes",
                         "https://barbora.lt/namai-ir-laisvalaikis"];
 
-    public async Task<List<ProductData>> ScrapeProductsAsync(CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Item> ScrapeProductsAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() 
@@ -34,8 +37,7 @@ public class BarboraScraper : IScraper
         await page.AddInitScriptAsync("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
 
         Random rand = new Random();
-        List<ProductData> allProducts = new List<ProductData>();
-
+        
         foreach(string url in Urls)
         {
             int pageUrl = 1;
@@ -48,40 +50,60 @@ public class BarboraScraper : IScraper
                 {
                 WaitUntil = WaitUntilState.DOMContentLoaded
                 });
-                if (response == null) continue;
+                if (response == null)
+                {
+                    pageUrl++;
+                    continue;
+                } 
 
                 var html = await response.TextAsync();
 
-                // 2. cuts JSON between '[' and ']'            
+                // 2. finds window.b_productList and cuts it and converts to JSON         
                 int markerIndex = html.IndexOf("window.b_productList = [");
-                if (markerIndex == -1){continue;}
+                if (markerIndex == -1){
+                    pageUrl++;
+                    continue;
+                } 
 
                 int start = markerIndex + "window.b_productList = ".Length;
                 int end = html.IndexOf("];", start);
-                if (end == -1 || end <= start){continue;}
+                if (end == -1 || end <= start){
+                    pageUrl++;
+                    continue;
+                } 
 
                 var jsonText = html[start..(end + 1)];
 
                 // 3. takes jsonText
-                using var doc = JsonDocument.Parse(jsonText);
+                var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
 
-                // 4. takes only title and price
-                var products = doc.RootElement.EnumerateArray().Select(p => new ProductData
+                // 4. scrapes item information
+                var items = json.EnumerateArray().Select(p => new Item
                 {
-                Title = p.GetProperty("title").GetString()!,
-                Price = p.GetProperty("price").GetDecimal()
+                    Name = p.GetProperty("title").GetString()!,
+                    Prices = new List<Price>
+                    {
+                        new Price
+                        {
+                            Cost = p.GetProperty("price").GetDecimal(),
+                            RetailCost = p.GetNullableDecimal("retail_price"),
+                            RecordedAt = DateTime.UtcNow
+                        }
+                    }
                 }).ToList();
 
                 // 5. if page is empty, goes to next url.
-                if (products.Count == 0)break;
+                if (items.Count == 0)break;
 
-                allProducts.AddRange(products);
+                // 6. sends the information of items to worker
+                foreach (var item in items)
+                {
+                    yield return item;
+                }
+                
                 pageUrl++;
-
-                // pause
                 await Task.Delay(rand.Next(2000, 3500), cancellationToken);
             }
         }
-        return allProducts;
     }
 }

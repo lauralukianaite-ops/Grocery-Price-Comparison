@@ -1,7 +1,6 @@
 ﻿namespace backend.DTOs;
 
-public enum DiscountVerdict
-{
+public enum DiscountVerdict {
     Real,
     Exaggerated,
     False
@@ -12,6 +11,6 @@ public record DiscountFlagResponseDto(
     string StoreName,
     decimal Cost,
     decimal RetailCost,
-    decimal TypicalCost,
+    decimal? TypicalCost,
     DiscountVerdict Verdict
 );

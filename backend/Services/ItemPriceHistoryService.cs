@@ -1,32 +1,31 @@
-﻿using backend.Data;
-using backend.DTOs;
-using backend.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using backend.DTOs;
+using backend.Repositories;
 
 namespace backend.Services;
 
 public class ItemPriceHistoryService : IItemPriceHistoryService
 {
-    private readonly AppDbContext _dbContext;
-    public ItemPriceHistoryService(AppDbContext db)
+    private readonly IItemsRepository _itemsRepository;
+    public ItemPriceHistoryService(IItemsRepository itemsRepository)
     {
-        _dbContext = db;
+        _itemsRepository = itemsRepository;
     }
     public async Task<List<PricePointDto>?> GetPriceHistoryAsync(int itemId)
     {
-        var itemsExist = await _dbContext.Items.AnyAsync(i => i.Id == itemId);
+        var itemsExist = await _itemsRepository.ExistsAsync(itemId);
         if (!itemsExist) return null;
         
-        return await _dbContext.Prices
-            .Where(p => p.ItemId == itemId)
+        var prices = await _itemsRepository.GetPriceWithStoreByItemIdAsync(itemId);
+
+        return prices
             .OrderBy(p => p.RecordedAt)
             .Select(p => new PricePointDto(
                 p.StoreId,
-                p.Store.Name,
+                p.Store!.Name,
                 p.Cost,
                 p.RetailCost,
                 p.RecordedAt
                 ))
-            .ToListAsync();
+            .ToList();
     }
 }

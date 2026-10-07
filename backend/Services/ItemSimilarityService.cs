@@ -1,20 +1,21 @@
-using backend.Data;
 using backend.DTOs;
 using backend.Entities;
-using Microsoft.EntityFrameworkCore;
+using backend.Repositories;
+using System.Globalization;
+using System.Text;
 
 namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
-    private readonly AppDbContext _context;
+    private readonly IItemsRepository _itemsRepository;
 
-    public ItemSimilarityService(AppDbContext context)
+    public ItemSimilarityService(IItemsRepository itemsRepository)
     {
-        _context = context;
+        _itemsRepository = itemsRepository;
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.3)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
@@ -22,10 +23,8 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var allItems = await _context.Items
-            .Include(i => i.Prices)
-            .ThenInclude(p => p.Store)
-            .ToListAsync();
+        var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
+
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
@@ -38,26 +37,29 @@ public class ItemSimilarityService : IItemSimilarityService
 
     public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
     {
+        var normalizedBaseItemName = RemoveDiacritics(itemName);
+        var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
         var results = new List<SimilarItemDto>();
 
         foreach (var item in allItems)
         {
-            double similarity = CalculateTrigramSimilarity(itemName, item.Name);
+            var normalizedItemName = RemoveDiacritics(item.Name);
+            double similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
+            bool containsAnyWord = queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
 
-            if (similarity >= threshold)
+            if (similarity >= threshold || containsAnyWord)
             {
                 var latestPricesPerStore = item.Prices
                 .Where(p => p.Store != null)
-                .GroupBy(p => p.Store.Name)
-                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault())
-                .Where(p => p != null);
+                .GroupBy(p => p.Store!.Name)
+                .Select(g => g.OrderByDescending(p => p.RecordedAt).FirstOrDefault());
 
                 foreach (var latestPrice in latestPricesPerStore)
                 {
                     results.Add(new SimilarItemDto(
                         Id: item.Id,
                         Name: item.Name,
-                        Store: latestPrice.Store.Name,
+                        Store: latestPrice!.Store!.Name,
                         Cost: (double)latestPrice.Cost,
                         RetailCost: latestPrice.RetailCost,
                         SimilarityScore: Math.Round(similarity, 2)
@@ -102,5 +104,24 @@ public class ItemSimilarityService : IItemSimilarityService
         }
 
         return trigrams;
+    }
+
+    private string RemoveDiacritics(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+        var normalizedString = text.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
     }
 }
