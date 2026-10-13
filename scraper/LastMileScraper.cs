@@ -11,19 +11,20 @@ public class LastMileScraper : IScraper
 
     private readonly Dictionary<string, List<string>> AllStores;
 
+    // constructor opens and reads all of the "LastMileStores.json" provided store information
     public LastMileScraper()
     {
         string filePath = "LastMileStores.json";
 
         if (!File.Exists(filePath))
         {
-            throw new FileNotFoundException($"Nerastas konfigūracijos failas: {filePath}");
+            throw new FileNotFoundException($"File not found: {filePath}");
         }
 
         string jsonContent = File.ReadAllText(filePath);
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-        // Nuskaitome visą žodyną
+        // reads store names and their urls
         AllStores = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonContent, options)
                   ?? throw new InvalidOperationException("Nepavyko nuskaityti konfigūracijos.");
 
@@ -32,7 +33,7 @@ public class LastMileScraper : IScraper
             throw new InvalidOperationException("JSON faile nėra nei vienos parduotuvės.");
         }
 
-        // Priskiriame pirmos parduotuvės pavadinimą į StoreName, vos suveikus konstruktoriui
+        // assigns the first store to StoreName
         StoreName = AllStores.First().Key;
     }
 
