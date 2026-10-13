@@ -10,10 +10,14 @@ function getApiUrl(path) {
   return `${apiBaseUrl.replace(/\/$/, "")}${path}`;
 }
 
-export async function get(path) {
-  const response = await fetch(getApiUrl(path));
+export async function get(path, options = {}) {
+  const response = await fetch(getApiUrl(path), options);
 
   if (!response.ok) {
+    if (response.status === 501) {
+      throw new Error("The product catalog endpoint is not implemented yet.");
+    }
+
     throw new Error("Unable to load item data.");
   }
 
