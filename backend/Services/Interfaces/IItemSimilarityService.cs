@@ -1,6 +1,6 @@
 using backend.DTOs;
 
-namespace backend.Services;
+namespace backend.Services.Interfaces;
 
 public interface IItemSimilarityService
 {
