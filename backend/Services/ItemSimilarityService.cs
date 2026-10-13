@@ -15,7 +15,7 @@ public class ItemSimilarityService : IItemSimilarityService
         _itemsRepository = itemsRepository;
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.2, bool strictMode = false)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
@@ -25,7 +25,7 @@ public class ItemSimilarityService : IItemSimilarityService
 
         var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
 
-        var similarItems = FindSimilarItems(itemName, allItems, threshold);
+        var similarItems = FindSimilarItems(itemName, allItems, threshold, strictMode);
 
         return new SimilarItemsResponseDto
         {
@@ -35,7 +35,7 @@ public class ItemSimilarityService : IItemSimilarityService
         };
     }
 
-    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.3)
+    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.4, bool strictMode = false)
     {
         var normalizedBaseItemName = RemoveDiacritics(itemName);
         var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
@@ -45,7 +45,7 @@ public class ItemSimilarityService : IItemSimilarityService
         {
             var normalizedItemName = RemoveDiacritics(item.Name);
             double similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
-            bool containsAnyWord = queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
+            bool containsAnyWord = !strictMode && queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
 
             if (similarity >= threshold || containsAnyWord)
             {
