@@ -46,6 +46,14 @@ public class BasketService
         return Enum.Parse<BasketStrictness>(word, true);
     }
 
+    // WHY: the server owns the three numbers, so they can be tuned here without the frontend knowing them.
+    public double BarFor(BasketStrictness strictness)
+    {
+        if (strictness == BasketStrictness.Broad) return 0.2;
+        if (strictness == BasketStrictness.Strict) return 0.5;
+        return 0.3;
+    }
+
     // WHY: duplicates become one entry, kept in the order they first appeared so rows stay predictable.
     public List<MergedBasketItem> MergeDuplicates(List<BasketRequestItemDto> items)
     {
