@@ -6,8 +6,8 @@ namespace backend.Services;
 
 public class BasketService
 {
-    public const int MaxItems = 100;
-    public const int MaxQuantity = 1000;
+    public const int MaxRows = 100;
+    public const int MaxItemQuantity = 1000;
 
     private static readonly List<string> StrictnessWords = new() { "broad", "normal", "strict" };
 
@@ -19,15 +19,15 @@ public class BasketService
     }
 
     // Every problem is collected into one answer.
-    public List<string> FindProblems(BasketRequestDto request, List<int> knownItemIds)
+    public List<string> FindProblems(BasketRequestDto request, List<int> existingItemIds)
     {
         if (request.Items is null || request.Items.Count == 0)
             return new List<string> { "The list is empty." };
 
         var problems = new List<string>();
 
-        if (request.Items.Count > MaxItems)
-            problems.Add($"The list has more than {MaxItems} entries.");
+        if (request.Items.Count > MaxRows)
+            problems.Add($"The list has more than {MaxRows} rows.");
 
         if (request.Strictness is not null && !StrictnessWords.Contains(request.Strictness.ToLower()))
             problems.Add("Strictness must be one of: broad, normal, strict.");
@@ -37,10 +37,10 @@ public class BasketService
             if (item.Quantity < 1)
                 problems.Add($"Item {item.ItemId}: quantity must be at least 1.");
 
-            if (item.Quantity > MaxQuantity)
-                problems.Add($"Item {item.ItemId}: quantity must be at most {MaxQuantity}.");
+            if (item.Quantity > MaxItemQuantity)
+                problems.Add($"Item {item.ItemId}: quantity must be at most {MaxItemQuantity}.");
 
-            if (!knownItemIds.Contains(item.ItemId))
+            if (!existingItemIds.Contains(item.ItemId))
                 problems.Add($"Item {item.ItemId} does not exist.");
         }
 
@@ -54,7 +54,7 @@ public class BasketService
     }
 
     // The server owns the three numbers, so they can be tuned here without the frontend knowing them.
-    public double BarFor(BasketStrictness strictness)
+    public double ThresholdFor(BasketStrictness strictness)
     {
         if (strictness == BasketStrictness.Broad) return 0.2;
         if (strictness == BasketStrictness.Strict) return 0.5;
