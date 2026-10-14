@@ -26,12 +26,7 @@ public class LastMileScraper : IScraper
 
         // reads store names and their urls
         AllStores = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonContent, options)
-                  ?? throw new InvalidOperationException("Nepavyko nuskaityti konfigūracijos.");
-
-        if (AllStores.Count == 0)
-        {
-            throw new InvalidOperationException("JSON faile nėra nei vienos parduotuvės.");
-        }
+                  ?? throw new InvalidOperationException("JSON content is empty or null.");
 
         // assigns the first store to StoreName
         StoreName = AllStores.First().Key;
