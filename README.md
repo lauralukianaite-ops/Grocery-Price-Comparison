@@ -13,18 +13,20 @@ This tool will be designed to track and compare food and product prices across d
 
 ## Core Features
 
-1. **Product Similary index** Allows to recommend the user similar products. The index will consist of category, name, weidth, etc.
-2. **Cross-Store Product Search:** Search for identical products by name or category across multiple supported stores.
-3. **Cross-Product Price Comparison** Search for similar products based on the similary index and compare their price, suggest better options.
-4. **Price History Tracking:** Store price data to monitor price changes over time. Implement graphs and in depth analysis.
-5. **Fake Discount Detection:** Identify suspicious discounts where prices were raised right before a promotion. Implement flags that indicate irregularities.
-6. **Background Data Collection**. Automatically fetch and refresh latest prices periodically in the background.
-7. **User Watchlist:** Allow users to save favorite items to a personalized watchlist.
-8. **Price Alerts:** Notify users when the price of their basket or a favorite product has dropped beneath a specified threshold.
-9. **Cheapest Basket Calculator:** Calculate which store offers the lowest total price for a full user shopping list.
-10. **Optimize Basket Calculator:** Calculate the most optimal route for the user to the nearest grocery shops.
-11. **System health and monitoring dashboard:** provide metrics for monitoring system health, parsing errors, and performance using grafana and prometeus.
-12. **User Price Reporting Feature:** Allows any user to report a price discrepancy between the platform and the retailer.
+1. **Background data collection** — Prices are collected in the background and updated automatically every day.
+2. **Price history** — Tracks each product's price history.
+3. **Cross-store product search** — Search for products across stores using a similarity index.
+4. **Fake discount detection** — Detects fake or exaggerated discounts.
+5. **Cheapest basket calculator** — Add items to your cart, then press "Calculate cheapest basket". The result shows the store, the item names and the total price. Each generated basket has a unique URL that can be shared.
+6. **All products (indexed pages)** — Choose a store and optionally sort products by price or discount. Each product has an "Add to basket" button. This is shown on the main page by default, right below the watchlist, sorted by highest discount first.
+7. **Location-based store suggestion with travel costs** — Enter either your travel cost per km, or your car's fuel consumption (litres per 100 km) and fuel price per litre, which is used to calculate your travel cost per km. The nearest stores are then found and the travel cost is added to the total cart price. You can also set a maximum travel distance in km (for example, if you're walking, you might not want to consider stores more than 2 km away). Travel is calculated as a round trip using Google Maps distances, not straight lines.
+8. **Dislike product** — If a product in a generated basket isn't what you wanted, you can click a button to replace it with the next cheapest option. This may change the suggested store entirely.
+9. **User account**
+   1. **Watchlist and price alerts** — Add products to a watchlist, which appears on the main page when you're logged in. For each product, you can receive an alert and an email when its price reaches a set threshold.
+   2. **Saved carts** — Save favorite carts.
+   3. **Price discrepancy reports** — Report a difference between the price shown on the platform and the real in-store price.
+   4. **Saved settings** — Save your location and transport settings.
+10. **System health and monitoring dashboard** — Metrics for system health, parsing errors and performance, using Grafana and Prometheus.
 
 ---
 
