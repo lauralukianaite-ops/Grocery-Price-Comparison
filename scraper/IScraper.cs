@@ -4,7 +4,7 @@ namespace scraper;
 
 public interface IScraper
 {
-    string StoreName { get; }
+    string StoreName { get;}
     
     IAsyncEnumerable<Item> ScrapeProductsAsync(CancellationToken cancellationToken = default);
 }
