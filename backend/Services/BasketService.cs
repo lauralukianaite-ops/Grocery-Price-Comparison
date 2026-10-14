@@ -72,11 +72,16 @@ public class BasketService
         return flag.Verdict;
     }
 
-    public List<MergedBasketItem> MergeDuplicates(List<BasketRequestItemDto> items)
+    public List<BasketRequestItem> MergeDuplicates(List<BasketRequestItemDto> items)
     {
         return items
             .GroupBy(i => i.ItemId)
-            .Select((group, index) => new MergedBasketItem(index + 1, group.Key, group.Sum(i => i.Quantity)))
+            .Select((group, index) => new BasketRequestItem
+            {
+                Position = index + 1,
+                ItemId = group.Key,
+                Quantity = group.Sum(i => i.Quantity)
+            })
             .ToList();
     }
 }
