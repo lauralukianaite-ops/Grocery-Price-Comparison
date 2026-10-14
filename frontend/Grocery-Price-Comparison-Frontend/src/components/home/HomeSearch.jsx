@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ItemSearchDropdown from "../items/ItemSearchDropdown";
+import { ItemSearchDropdown } from "../../features/catalog";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";

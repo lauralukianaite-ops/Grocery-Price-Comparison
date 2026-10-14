@@ -1,6 +1,6 @@
 import Hero from "../components/home/Hero";
 import HomeSearch from "../components/home/HomeSearch";
-import { useItemSearch } from "../hooks/useItemSearch";
+import { useItemSearch } from "../features/catalog";
 
 export default function HomePage() {
   const { search, items, isLoading, error, hasSearched } = useItemSearch();

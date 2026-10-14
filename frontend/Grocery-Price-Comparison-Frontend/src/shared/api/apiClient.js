@@ -21,5 +21,9 @@ export async function get(path, options = {}) {
     throw new Error("Unable to load item data.");
   }
 
+  if (response.status === 204) {
+    return null;
+  }
+
   return response.json();
 }

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent } from "../../../components/ui/card";
 import ItemSearchResultList from "./ItemSearchResultList";
 import ItemSearchStatus from "./ItemSearchStatus";
 

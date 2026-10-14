@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getItems } from "../services/items/getItems";
+import { getCatalog } from "../api/catalogApi";
 
 const EMPTY_CATALOG = {
   items: [],
@@ -8,7 +8,14 @@ const EMPTY_CATALOG = {
   pageSize: 12,
 };
 
-export function useProducts({ page, pageSize, query, sort }) {
+export function useProducts({
+  page,
+  pageSize,
+  query,
+  sort,
+  latitude,
+  longitude,
+}) {
   const [catalog, setCatalog] = useState(EMPTY_CATALOG);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,8 +32,8 @@ export function useProducts({ page, pageSize, query, sort }) {
       setError("");
 
       try {
-        const nextCatalog = await getItems(
-          { page, pageSize, query, sort },
+        const nextCatalog = await getCatalog(
+          { page, pageSize, query, sort, latitude, longitude },
           controller.signal,
         );
         setCatalog(nextCatalog);
@@ -46,7 +53,7 @@ export function useProducts({ page, pageSize, query, sort }) {
       clearTimeout(requestDelay);
       controller.abort();
     };
-  }, [page, pageSize, query, requestVersion, sort]);
+  }, [latitude, longitude, page, pageSize, query, requestVersion, sort]);
 
   return { ...catalog, isLoading, error, retry };
 }

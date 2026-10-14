@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { searchItems } from "../services/items/searchItems";
+import { searchItems } from "../api/catalogApi";
 
 export function useItemSearch() {
   const [items, setItems] = useState([]);

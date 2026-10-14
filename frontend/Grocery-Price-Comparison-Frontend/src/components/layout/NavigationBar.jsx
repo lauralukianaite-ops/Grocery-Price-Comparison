@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Menu, ShoppingBasket } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
-import { useBasketStore } from "../../context/useBasketStore";
+import {
+  selectBasketItemCount,
+  useBasketStore,
+} from "../../features/basket";
 import { APP_ROUTES, PRIMARY_NAVIGATION } from "../../router/routes";
 import { cn } from "../../lib/utils";
 import { Badge } from "../ui/badge";
@@ -24,7 +27,7 @@ function navigationLinkClass({ isActive }) {
 
 export default function NavigationBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const basketCount = useBasketStore((state) => state.productIds.length);
+  const basketCount = useBasketStore(selectBasketItemCount);
 
   return (
     <>
@@ -67,11 +70,10 @@ export default function NavigationBar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="relative"
-              aria-label={`Basket with ${basketCount} items`}
+            <Link
+              className={cn(buttonVariants({ variant: "outline" }), "relative")}
+              to={APP_ROUTES.basket}
+              aria-label={`Basket with ${basketCount} ${basketCount === 1 ? "item" : "items"}`}
             >
               <ShoppingBasket aria-hidden="true" />
               <span className="hidden sm:inline">Basket</span>
@@ -80,7 +82,7 @@ export default function NavigationBar() {
                   {basketCount}
                 </Badge>
               )}
-            </Button>
+            </Link>
 
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger
