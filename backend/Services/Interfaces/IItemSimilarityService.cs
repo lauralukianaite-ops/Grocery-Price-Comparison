@@ -1,7 +1,7 @@
 using backend.DTOs;
 using backend.Entities;
 
-namespace backend.Services;
+namespace backend.Services.Interfaces;
 
 public interface IItemSimilarityService
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using backend.DTOs;
 using backend.Entities;
+using backend.Enums;
 using backend.Services;
 using Xunit;
 
