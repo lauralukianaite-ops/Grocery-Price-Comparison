@@ -15,7 +15,18 @@ public class ItemSimilarityService : IItemSimilarityService
         _itemsRepository = itemsRepository;
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.2, bool strictMode = false)
+    public double CalculateSimilarity(string firstName, string secondName)
+    {
+        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(secondName))
+            return 0.0;
+
+        var normalisedFirst = RemoveDiacritics(firstName);
+        var normalisedSecond = RemoveDiacritics(secondName);
+
+        return CalculateTrigramSimilarity(normalisedFirst,normalisedSecond);
+    }
+
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.2)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
@@ -25,7 +36,7 @@ public class ItemSimilarityService : IItemSimilarityService
 
         var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
 
-        var similarItems = FindSimilarItems(itemName, allItems, threshold, strictMode);
+        var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
         return new SimilarItemsResponseDto
         {
@@ -35,7 +46,7 @@ public class ItemSimilarityService : IItemSimilarityService
         };
     }
 
-    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.4, bool strictMode = false)
+    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.4)
     {
         var normalizedBaseItemName = RemoveDiacritics(itemName);
         var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
@@ -45,7 +56,7 @@ public class ItemSimilarityService : IItemSimilarityService
         {
             var normalizedItemName = RemoveDiacritics(item.Name);
             double similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
-            bool containsAnyWord = !strictMode && queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
+            bool containsAnyWord = queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
 
             if (similarity >= threshold || containsAnyWord)
             {

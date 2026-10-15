@@ -111,44 +111,23 @@ public class ItemSimilarityServiceTests
     }
 
     [Fact]
-    public void FindSimilarItems_InNonStrictMode()
+    public void CalculateSimilarity_ReturnsOne_ForIdenticalOrDiacriticEquivalentStrings()
     {
-        var searchQuery = "Dvaro pienas";
-        var items = new List<Item>
-        {
-            new Item { Id = 1, Name = "Dvaro pienas", Prices = new List<Price> { new Price { Cost = 1.29m, Store = new Store { Name = "Maxima" } } } },
-            new Item { Id = 2, Name = "Dvaro varškė", Prices = new List<Price> { new Price { Cost = 0.99m, Store = new Store { Name = "Maxima" } } } }
-        };
-
         var service = new ItemSimilarityService(null);
-        var results = service.FindSimilarItems(searchQuery, items, threshold: 0.2, strictMode: false);
 
-        Assert.Contains(results, r => r.Id == 1);
-        Assert.Contains(results, r => r.Id == 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Dvaro pienas", "dvaro pienas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Česnakinis batonas", "cesnakinis batonas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Šviežia varškė 9%", "Sviezia varske 9%"), precision: 2);
     }
 
     [Fact]
-    public void FindSimilarItems_InStrictMode()
+    public void CalculateSimilarity_ReturnsZero_WhenInputsAreNullOrEmpty()
     {
-        var searchQuery = "Dvaro pienas";
-        var items = new List<Item>
-        {
-            new Item { Id = 1, Name = "Dvaro pienas", Prices = new List<Price> { new Price { Cost = 1.29m, Store = new Store { Name = "Maxima" } } } },
-            new Item { Id = 2, Name = "Rokiškio pienas", Prices = new List<Price> { new Price { Cost = 1.19m, Store = new Store { Name = "Iki" } } } },
-            new Item { Id = 3, Name = "Dvaro varškė", Prices = new List<Price> { new Price { Cost = 0.89m, Store = new Store { Name = "Maxima" } } } }
-        };
-
         var service = new ItemSimilarityService(null);
 
-        var results = service.FindSimilarItems(searchQuery, items, threshold: 0.3, strictMode: true);
-
-        foreach (var r in results)
-        {
-            Console.WriteLine($"  [Similarity index: {r.SimilarityScore:F2}] Id: {r.Id} - {r.Name}");
-        }
-
-        Assert.Contains(results, r => r.Id == 1);
-        Assert.Contains(results, r => r.Id == 2);
-        Assert.DoesNotContain(results, r => r.Id == 3);
+        Assert.Equal(0.0, service.CalculateSimilarity(null, "Pienas"));
+        Assert.Equal(0.0, service.CalculateSimilarity("Pienas", null));
+        Assert.Equal(0.0, service.CalculateSimilarity("", "Pienas"));
+        Assert.Equal(0.0, service.CalculateSimilarity("   ", "Pienas"));
     }
-}
+}   
