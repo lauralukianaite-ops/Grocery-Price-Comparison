@@ -109,4 +109,25 @@ public class ItemSimilarityServiceTests
             Console.WriteLine($"  [Similarity index: {r.SimilarityScore:F2}] Id: {r.Id} - {r.Name}; Store: {r.Store}; Price: {r.Cost}");
         }
     }
-}
+
+    [Fact]
+    public void CalculateSimilarity_ReturnsOne_ForIdenticalOrDiacriticEquivalentStrings()
+    {
+        var service = new ItemSimilarityService(null);
+
+        Assert.Equal(1.0, service.CalculateSimilarity("Dvaro pienas", "dvaro pienas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Česnakinis batonas", "cesnakinis batonas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Šviežia varškė 9%", "Sviezia varske 9%"), precision: 2);
+    }
+
+    [Fact]
+    public void CalculateSimilarity_ReturnsZero_WhenInputsAreNullOrEmpty()
+    {
+        var service = new ItemSimilarityService(null);
+
+        Assert.Equal(0.0, service.CalculateSimilarity(null, "Pienas"));
+        Assert.Equal(0.0, service.CalculateSimilarity("Pienas", null));
+        Assert.Equal(0.0, service.CalculateSimilarity("", "Pienas"));
+        Assert.Equal(0.0, service.CalculateSimilarity("   ", "Pienas"));
+    }
+}   
