@@ -55,7 +55,8 @@ public class BasketService : IBasketService
         basket.RequestItems = rows;
         await _basketsRepository.SaveAsync(basket);
 
-        return ToResponse(basket);
+        // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
+        return await GetAsync(basket.Id);
     }
 
     public async Task<BasketResponseDto?> GetAsync(Guid id)
