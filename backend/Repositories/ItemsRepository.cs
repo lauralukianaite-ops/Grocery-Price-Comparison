@@ -39,11 +39,12 @@ public class ItemsRepository : IItemsRepository
         return await _context.Items.ToListAsync();
     }
 
-    public async Task<List<Price>> GetNewestPricesWithStoreSinceAsync(DateTime since)
+    public async Task<List<Price>> GetNewestPricesWithStoreAndItemSinceAsync(DateTime since)
     {
         var freshPrices = await _context.Prices
             .Where(p => p.RecordedAt >= since)
             .Include(p => p.Store)
+            .Include(p => p.Item)
             .ToListAsync();
 
         return freshPrices
