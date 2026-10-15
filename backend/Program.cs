@@ -3,6 +3,7 @@ using backend.Services;
 using Microsoft.EntityFrameworkCore;
 using backend.Repositories;
 using backend.Services.Interfaces;
+using System.Text.Json.Serialization;
 
 DotNetEnv.Env.Load();
 
@@ -29,10 +30,12 @@ else
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
-builder.Services.AddScoped<IItemsRepository,ItemsRepository>();
+builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
+builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
 builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
+builder.Services.AddScoped<IBasketService, BasketService>();
 
 const string FrontendCors = "Frontend";
 builder.Services.AddCors(options =>
@@ -44,7 +47,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
 
