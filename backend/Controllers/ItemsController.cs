@@ -19,6 +19,13 @@ public class ItemsController : ControllerBase
         _fakeDiscountService = fakeDiscountService;
     }
 
+    [HttpGet]
+    public IActionResult GetItems()
+    {
+        // TODO: Return the paginated product catalog with its current store prices.
+        return StatusCode(StatusCodes.Status501NotImplemented);
+    }
+
     [HttpGet("{itemId:int}/price-history")]
     public async Task<IActionResult> GetPriceHistory(int itemId)
     {
