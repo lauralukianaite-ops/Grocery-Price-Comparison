@@ -1,4 +1,4 @@
-namespace backend.DTOs;
+namespace backend.Enums;
 
 public enum BasketStrictness
 {

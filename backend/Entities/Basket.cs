@@ -1,4 +1,4 @@
-using backend.DTOs;
+using backend.Enums;
 
 namespace backend.Entities;
 

@@ -1,3 +1,5 @@
+using backend.Enums;
+
 namespace backend.DTOs;
 
 public record BasketRowDto(

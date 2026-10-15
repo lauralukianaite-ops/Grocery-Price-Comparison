@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using backend.DTOs;
 using backend.Entities;
+using backend.Enums;
 using backend.Services;
 using Xunit;
 
@@ -41,14 +42,19 @@ public class BasketServiceTests
         return new BasketRequestDto(items.ToList(), strictness);
     }
 
+    // An empty list is the only problem reported, even though "medium" is a bad strictness word too.
     [Fact]
-    public void EmptyList_ReportsOnlyThat()
+    public void EmptyList_ReportsOnlyThat_EvenWithABadStrictnessWord()
     {
-        var problems = Service.FindProblems(Request("medium"), new List<int> { 1 });
+        var emptyListWithBadWord = Request("medium");
+        var noExistingItems = new List<int>();
+
+        var problems = Service.FindProblems(emptyListWithBadWord, noExistingItems);
 
         Assert.Equal(new List<string> { "The list is empty." }, problems);
     }
 
+    // Quantity 0, -3, 1001 and an unknown id 999 in one request give four messages, each naming its item id.
     [Fact]
     public void BadQuantitiesAndUnknownIds_AreAllReportedByItemId()
     {
@@ -63,6 +69,7 @@ public class BasketServiceTests
         Assert.Contains("Item 999 does not exist.", problems);
     }
 
+    // Item 5 twice, once with quantity 0: the bad copy is rejected instead of being hidden by merging.
     [Fact]
     public void DuplicateIdWithOneBadQuantity_IsStillRejected()
     {
@@ -73,6 +80,7 @@ public class BasketServiceTests
         Assert.Equal(new List<string> { "Item 5: quantity must be at least 1." }, problems);
     }
 
+    // 101 rows and the word "medium" give two messages in one answer, not one at a time.
     [Fact]
     public void TooManyRowsAndUnknownStrictnessWord_AreBothReported()
     {
@@ -85,6 +93,7 @@ public class BasketServiceTests
         Assert.Contains("Strictness must be one of: broad, normal, strict.", problems);
     }
 
+    // [7x2, 3x1, 7x3] becomes [7x5 at position 1, 3x1 at position 2]: summed, first appearance first.
     [Fact]
     public void DuplicateIds_MergeIntoOneEntry_InFirstAppearanceOrder()
     {
@@ -99,6 +108,7 @@ public class BasketServiceTests
         Assert.Equal(1, merged[1].Quantity);
     }
 
+    // Gamma has the cheapest milk but no bread, so Beta wins with both.
     [Fact]
     public void StoreMissingOneRow_IsOutEvenIfCheaperElsewhere()
     {
@@ -115,6 +125,7 @@ public class BasketServiceTests
         Assert.Equal(1.70m, basket.Total);
     }
 
+    // The clicked milk costs 1.50 but a similar milk in the same store costs 1.10, so the row shows the cheaper one.
     [Fact]
     public void OwnStoreCheaperSimilarProduct_ReplacesTheClickedOne()
     {
@@ -131,6 +142,7 @@ public class BasketServiceTests
         Assert.Equal(1.10m, row.UnitCost);
     }
 
+    // At equal cost the exact name match wins (even with the higher id 9); at equal similarity the lower id wins.
     [Fact]
     public void SameCost_MoreSimilarNameWins_ThenLowerItemId()
     {
@@ -152,6 +164,7 @@ public class BasketServiceTests
         Assert.Equal(2, Assert.Single(basket.Items).ItemId);
     }
 
+    // Both stores total 2.00; Tie-A wins by name even though Tie-B has the lower id and was listed first.
     [Fact]
     public void EqualTotals_StoreWhoseNameSortsFirstWins()
     {
@@ -165,6 +178,7 @@ public class BasketServiceTests
         Assert.Equal("Tie-A", basket.StoreName);
     }
 
+    // Broad (0.2) accepts the cheaper 0.24 match, normal (0.3) only the 0.33 match, strict (0.5) nothing.
     [Fact]
     public void HigherStrictness_ShrinksCandidates_UntilNoStoreCanFill()
     {
@@ -183,6 +197,7 @@ public class BasketServiceTests
         Assert.Null(Service.FindCheapestBasket(items, prices, rows, 0.5));
     }
 
+    // Milk 1.20 x2 and bread 0.50 x1 give row totals 2.40 and 0.50 and a basket total of 2.90.
     [Fact]
     public void RowTotalIsUnitCostTimesQuantity_AndTotalIsTheSumOfRows()
     {
@@ -198,10 +213,11 @@ public class BasketServiceTests
         Assert.Equal(2.90m, basket.Total);
     }
 
+    // An exaggerated discount exists at store 1 only: asking for store 1 gives Exaggerated, store 2 gives Real.
     [Fact]
     public void VerdictFor_UsesTheStoresOwnFlag_AndRealWhenThereIsNone()
     {
-        // retail:10 . 10 x10, 8 x20, 6. an exaggerated discount at store 1 only
+        // retail:10 . 10 x10, 8 x20, 6.
         var store = S(1, "Alpha");
         var fish = I(1, "lasisa");
         var prices = new List<Price> { P(store, fish, 6m) };
