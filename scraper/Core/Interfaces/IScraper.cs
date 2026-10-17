@@ -7,5 +7,7 @@ public interface IScraper
     string StoreName { get;}
     
     IAsyncEnumerable<Item> ScrapeProductsAsync(CancellationToken cancellationToken = default);
+
+    Task InitializeAsync();
 }
 

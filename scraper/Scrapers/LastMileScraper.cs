@@ -7,29 +7,18 @@ namespace scraper;
 
 public class LastMileScraper : IScraper
 {
-    public string StoreName { get; private set;}
+    private readonly IStoreConfigLoader _configLoader;
+    private readonly String _configFilePath;
 
-    private readonly Dictionary<string, List<string>> AllStores;
+    public string StoreName { get; private set;} = string.Empty;
+    private Dictionary<string, List<string>> AllStores = new();
 
     // constructor opens and reads all of the "LastMileStores.json" provided store information
-    public LastMileScraper()
+    public LastMileScraper(IStoreConfigLoader configLoader, 
+                            string configFilePath = "Data/LastMileStores.json")
     {
-        string filePath = "LastMileStores.json";
-
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException($"File not found: {filePath}");
-        }
-
-        string jsonContent = File.ReadAllText(filePath);
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-        // reads store names and their urls
-        AllStores = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonContent, options)
-                  ?? throw new InvalidOperationException("JSON content is empty or null.");
-
-        // assigns the first store to StoreName
-        StoreName = AllStores.First().Key;
+        _configLoader = configLoader;
+        _configFilePath = configFilePath;
     }
 
     public async IAsyncEnumerable<Item> ScrapeProductsAsync(
@@ -175,5 +164,11 @@ public class LastMileScraper : IScraper
                 }
             };
         }).ToList();
+    }
+
+    public async Task InitializeAsync()
+    {
+        AllStores = await _configLoader.LoadStoresAsync(_configFilePath);
+        StoreName = AllStores.First().Key;
     }
 }
