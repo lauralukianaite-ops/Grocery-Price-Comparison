@@ -52,6 +52,7 @@ public class LastMileScraper : IScraper
                 
                 // 3. scrapes starting page items
                 var response = await responseTask;
+                if (response == null) continue;
                 foreach (var item in await ExtractItemsAsync(response))
                 {
                     yield return item;
@@ -99,7 +100,7 @@ public class LastMileScraper : IScraper
                     {
                         break;
                     }
-                    // 8. sends found products to worker
+                    // 9. sends found products to worker
                     foreach (var item in newItems)
                     {
                         yield return item;
