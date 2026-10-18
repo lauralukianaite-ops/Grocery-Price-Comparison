@@ -1,36 +1,38 @@
-# Grocery-Price-Comparison
+# Grocery Price Comparison
 
-> Grocery Product Price Comparison & Basket Optimizer tool
-> Software Engineering I course at Vilnius University.
+A web app for comparing grocery prices across Lithuanian stores. Users build a basket and get the store where it costs the least, including the cost of travel. Users can also exclude unwanted products or share the result through a unique link. Products can be searched and browsed across stores, with each product’s price history and a check on whether its discount is real. Registered users can keep a watchlist with price alerts, save baskets and report price discrepancies.
 
----
+## Stores Supported
 
-## Project Vision & Scope
-
-This tool will be designed to track and compare food and product prices across different Lithuanian grocery stores (e.g., Barbora, LastMile/Iki). The main objective is to help consumers find the cheapest items basket and identify misleading or fake discount strategies.
-
----
+Prices are collected from Maxima, IKI, PROMO Cash&Carry, Assorti, Livin and 14 more stores.
 
 ## Core Features
 
-1. **Background data collection** — Prices are collected in the background and updated automatically every day.
-2. **Price history** — Tracks each product's price history.
-3. **Cross-store product search** — Search for products across stores using a similarity index.
-4. **Fake discount detection** — Detects fake or exaggerated discounts.
-5. **Cheapest basket calculator** — Add items to your cart, then press "Calculate cheapest basket". The result shows the store, the item names and the total price. Each generated basket has a unique URL that can be shared.
-6. **All products (indexed pages)** — Choose a store and optionally sort products by price or discount. Each product has an "Add to basket" button. This is shown on the main page by default, right below the watchlist, sorted by highest discount first.
-7. **Location-based store suggestion with travel costs** — Enter either your travel cost per km, or your car's fuel consumption (litres per 100 km) and fuel price per litre, which is used to calculate your travel cost per km. The nearest stores are then found and the travel cost is added to the total cart price. You can also set a maximum travel distance in km (for example, if you're walking, you might not want to consider stores more than 2 km away). Travel is calculated as a round trip using Google Maps distances, not straight lines.
-8. **Dislike product** — If a product in a generated basket isn't what you wanted, you can click a button to replace it with the next cheapest option. This may change the suggested store entirely.
-9. **User account**
-   1. **Watchlist and price alerts** — Add products to a watchlist, which appears on the main page when you're logged in. For each product, you can receive an alert and an email when its price reaches a set threshold.
+1. **Background data collection** — Prices are collected in the background and updated automatically every day. 
+1. **Price history** — See each product's price history.
+1. **Cross-store product search** — Search for products across stores using a similarity index.
+1. **Fake discount detection** — Detects fake or exaggerated discounts. You can see flags in the main page and in your generated cart.
+1. **Cheapest basket calculator** — Add items to your cart, then press "Calculate cheapest basket". The result shows the store, the item names and the total price. Next to the total price, you can see the cost of groceries and the cost of travel for a fuller image. Each generated basket has a unique URL that can be copied to clipboard and shared.
+1. **All products (indexed pages)** — Filter by store and sort by price or discount percentage. Each product has an "Add to basket" button. This is shown on the main page, sorted by highest discount first by default.
+1. **Location-based store suggestion with travel costs** — Enter either your travel cost per km, or your car's fuel consumption (litres per 100 km) and fuel price per litre, which is used to calculate your travel cost per km. The nearest stores are then found and the travel cost is added to the total cart price. You can also set a maximum travel distance in km (for example, if you're walking, you might not want to consider stores more than 2 km away). Travel is calculated as a round trip using Google Maps distances, not straight lines.
+1. **Dislike product** — If a product in a generated basket isn't what you wanted, you can click a button to recalculate and find the next cheapest basket that does not include the disliked product. This may change the suggested store entirely.
+1. **User account**
+   1. **Watchlist and price alerts** — Add products to a watchlist. For each product, you can receive an alert and an email when its price reaches a set threshold.
    2. **Saved carts** — Save favorite carts.
    3. **Price discrepancy reports** — Report a difference between the price shown on the platform and the real in-store price.
    4. **Saved settings** — Save your location and transport settings.
-10. **System health and monitoring dashboard** — Metrics for system health, parsing errors and performance, using Grafana and Prometheus.
+1. **System health and monitoring dashboard** — Metrics for system health, parsing errors and performance, using Grafana and Prometheus.
 
+## Tech Stack
+
+- **Backend:** ASP.NET Core (.NET 10), Entity Framework Core
+- **Scraper:** .NET 10 Worker Service, Playwright
+- **Frontend:** React 19, Vite, Tailwind CSS, shadcn/ui
+- **Database:** PostgreSQL
+- **Tests:** xUnit
 ---
 
-## Branch Naming & Git Workflow
+## For contributors
 
 To maintain a clean repository and strict workflow, all team members must follow this Git convention.
 
