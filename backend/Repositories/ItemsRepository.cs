@@ -33,4 +33,23 @@ public class ItemsRepository : IItemsRepository
             .Include(p => p.Store)
             .ToListAsync();
     }
+
+    public async Task<List<Item>> GetItemsAsync()
+    {
+        return await _context.Items.ToListAsync();
+    }
+
+    public async Task<List<Price>> GetNewestPricesWithStoreAndItemSinceAsync(DateTime since)
+    {
+        var freshPrices = await _context.Prices
+            .Where(p => p.RecordedAt >= since)
+            .Include(p => p.Store)
+            .Include(p => p.Item)
+            .ToListAsync();
+
+        return freshPrices
+            .GroupBy(p => new { p.ItemId, p.StoreId })
+            .Select(g => g.OrderByDescending(p => p.RecordedAt).First())
+            .ToList();
+    }
 }

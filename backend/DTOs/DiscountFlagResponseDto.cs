@@ -1,10 +1,6 @@
-﻿namespace backend.DTOs;
+using backend.Enums;
 
-public enum DiscountVerdict {
-    Real,
-    Exaggerated,
-    False
-}
+namespace backend.DTOs;
 
 public record DiscountFlagResponseDto(
     int StoreId,

@@ -1,5 +1,6 @@
 ﻿using backend.DTOs;
 using backend.Repositories;
+using backend.Services.Interfaces;
 
 namespace backend.Services;
 
