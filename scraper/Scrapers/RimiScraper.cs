@@ -104,14 +104,28 @@ public class RimiScraper : IScraper
                 int promoIndex = cardHtml.IndexOf("price-label__body");
                 if (promoIndex != -1)
                 {
-                    string unitMarker = "price-per-unit\">";
-                    int unitStart = cardHtml.IndexOf(unitMarker, promoIndex);
-                    if (unitStart != -1)
+                    // finds major info <span class="major">
+                    string majorMarker = "<span class=\"major\">";
+                    int majorStart = cardHtml.IndexOf(majorMarker, promoIndex);
+                    
+                    // find cents info <span class="cents">
+                    string centsMarker = "<span class=\"cents\">";
+                    int centsStart = cardHtml.IndexOf(centsMarker, promoIndex);
+
+                    if (majorStart != -1 && centsStart != -1)
                     {
-                        unitStart += unitMarker.Length;
-                        int unitEnd = cardHtml.IndexOf("</div>", unitStart);
-                        string promoText = cardHtml[unitStart..unitEnd];
-                        promoPrice = ParsePrice(promoText);
+                        // cuts major
+                        majorStart += majorMarker.Length;
+                        int majorEnd = cardHtml.IndexOf("</span>", majorStart);
+                        int major = int.Parse(cardHtml[majorStart..majorEnd].Trim());
+
+                        // cuts cents
+                        centsStart += centsMarker.Length;
+                        int centsEnd = cardHtml.IndexOf("</span>", centsStart);
+                        int cents = int.Parse(cardHtml[centsStart..centsEnd].Trim());
+
+                        // connects both Euro and Cents to one price
+                        promoPrice = (major * 100 + cents) / 100m;
                     }
                 }
 
@@ -138,16 +152,11 @@ public class RimiScraper : IScraper
         return items;
     }
 
+    // method for parsing "1.89 € už kg" to 1.89 or similar
     private decimal ParsePrice(string text)
     {
         var match = System.Text.RegularExpressions.Regex.Match(text, @"\d+[\.,]?\d*");
-        if (match.Success && decimal.TryParse(match.Value.Replace(',', '.'), 
-            System.Globalization.NumberStyles.Any, 
-            System.Globalization.CultureInfo.InvariantCulture, out var price))
-        {
-            return price;
-        }
-        return 0;
+        return decimal.Parse(match.Value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public async Task InitializeAsync()
