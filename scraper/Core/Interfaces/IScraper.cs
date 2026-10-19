@@ -1,4 +1,5 @@
 using backend.Entities;
+using Microsoft.Playwright;
 
 namespace scraper;
 

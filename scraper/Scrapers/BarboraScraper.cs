@@ -74,37 +74,37 @@ public class BarboraScraper : IScraper
     {
         var html = await response.TextAsync();
 
-            // 1. finds window.b_productList and cuts it and converts to JSON         
-            int markerIndex = html.IndexOf("window.b_productList = [");
-            if (markerIndex == -1){
-                return new List<Item>();
-            } 
+        // 1. finds window.b_productList and cuts it and converts to JSON         
+        int markerIndex = html.IndexOf("window.b_productList = [");
+        if (markerIndex == -1){
+            return new List<Item>();
+        } 
 
-            int start = markerIndex + "window.b_productList = ".Length;
-            int end = html.IndexOf("];", start);
-            if (end == -1 || end <= start){
-                return new List<Item>();
-            } 
+        int start = markerIndex + "window.b_productList = ".Length;
+        int end = html.IndexOf("];", start);
+        if (end == -1 || end <= start){
+            return new List<Item>();
+        } 
 
-            var jsonText = html[start..(end + 1)];
+        var jsonText = html[start..(end + 1)];
 
-            // 2. takes jsonText
-            var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
+        // 2. takes jsonText
+        var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
 
-            // 3. scrapes item information
-            return json.EnumerateArray().Select(p => new Item
+        // 3. scrapes item information
+        return json.EnumerateArray().Select(p => new Item
+        {
+            Name = p.GetProperty("title").GetString()!,
+            Prices = new List<Price>
             {
-                Name = p.GetProperty("title").GetString()!,
-                Prices = new List<Price>
+                new Price
                 {
-                    new Price
-                    {
-                        Cost = p.GetProperty("price").GetDecimal(),
-                        RetailCost = p.GetNullableDecimal("retail_price"),
-                        RecordedAt = DateTime.UtcNow
-                    }
+                    Cost = p.GetProperty("price").GetDecimal(),
+                    RetailCost = p.GetNullableDecimal("retail_price"),
+                    RecordedAt = DateTime.UtcNow
                 }
-            }).ToList();
+            }
+        }).ToList();
     }
 
     public async Task InitializeAsync()
