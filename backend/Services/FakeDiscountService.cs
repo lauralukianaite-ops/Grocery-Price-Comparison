@@ -1,6 +1,8 @@
 using backend.DTOs;
 using backend.Entities;
+using backend.Enums;
 using backend.Repositories;
+using backend.Services.Interfaces;
 
 namespace backend.Services;
 

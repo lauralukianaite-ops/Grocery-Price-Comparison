@@ -22,6 +22,104 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("backend.Entities.Basket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StoreName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Strictness")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Baskets");
+                });
+
+            modelBuilder.Entity("backend.Entities.BasketItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BasketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("RowTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<int>("Verdict")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BasketId");
+
+                    b.ToTable("BasketItems");
+                });
+
+            modelBuilder.Entity("backend.Entities.BasketRequestItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BasketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BasketId");
+
+                    b.ToTable("BasketRequestItems");
+                });
+
             modelBuilder.Entity("backend.Entities.Item", b =>
                 {
                     b.Property<int>("Id")
@@ -123,6 +221,28 @@ namespace backend.Migrations
                     b.ToTable("StoreLocations");
                 });
 
+            modelBuilder.Entity("backend.Entities.BasketItem", b =>
+                {
+                    b.HasOne("backend.Entities.Basket", "Basket")
+                        .WithMany("Items")
+                        .HasForeignKey("BasketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Basket");
+                });
+
+            modelBuilder.Entity("backend.Entities.BasketRequestItem", b =>
+                {
+                    b.HasOne("backend.Entities.Basket", "Basket")
+                        .WithMany("RequestItems")
+                        .HasForeignKey("BasketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Basket");
+                });
+
             modelBuilder.Entity("backend.Entities.Price", b =>
                 {
                     b.HasOne("backend.Entities.Item", "Item")
@@ -151,6 +271,13 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("backend.Entities.Basket", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("RequestItems");
                 });
 
             modelBuilder.Entity("backend.Entities.Item", b =>

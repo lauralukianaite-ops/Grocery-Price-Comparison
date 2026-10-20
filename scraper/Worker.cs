@@ -16,6 +16,7 @@ public class Worker(ILogger<Worker> logger,
             // goes through all scrapers
             foreach (var scraper in scrapers)
             {
+                await scraper.InitializeAsync();
                 logger.LogInformation("Opening {Store}...", scraper.StoreName);
 
                 try
