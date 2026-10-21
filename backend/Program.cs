@@ -37,13 +37,6 @@ builder.Services.AddControllers()
 
 var app = builder.Build();
 
-// Seed database with initial data
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbSeeder.Initialize(dbContext);
-}
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
