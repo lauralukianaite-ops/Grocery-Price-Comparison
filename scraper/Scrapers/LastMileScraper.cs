@@ -132,25 +132,11 @@ public class LastMileScraper : IScraper
             var costPrice = fp.GetProperty("costPrice");
 
             // cost without discounts
-            decimal pCost = costPrice.GetProperty("p").GetDecimal();
+            decimal regularPrice = costPrice.GetProperty("p").GetDecimal();
             // cost with the highest discount
-            decimal? lCost = costPrice.GetNullableDecimal("l");
+            decimal? promoPrice = costPrice.GetNullableDecimal("l");
 
-            // 3. correctly places Cost and RetailCost
-            decimal finalCost;
-            decimal? retailCost;
-            if(lCost is null)
-            {
-                finalCost = pCost;
-                retailCost = null;
-            }
-            else
-            {
-                finalCost = (decimal)lCost;
-                retailCost = pCost;
-            }
-
-            // 4. creates the item
+            // 3. creates the item
             return new Item
             {
                 Name = fp.GetProperty("name").GetProperty("lt").GetString()!,
@@ -158,8 +144,8 @@ public class LastMileScraper : IScraper
                 {
                     new Price
                     {
-                        Cost = finalCost,
-                        RetailCost = retailCost,
+                        Cost = promoPrice ?? regularPrice,
+                        RetailCost = promoPrice != null ? regularPrice : null,
                         RecordedAt = DateTime.UtcNow
                     }
                 }
