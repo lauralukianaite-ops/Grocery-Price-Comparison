@@ -1,8 +1,9 @@
 namespace backend.DTOs;
-public class SimilarItemsResponseDto
+public class SimilarItemsResponseDto(
+    string BaseItemName,
+    double Threshold,
+    List<SimilarItemDto> SimilarItems
+)
 {
-    public string BaseItemName { get; set; } = string.Empty;
-    public double Threshold { get; set; }
-    public List<SimilarItemDto> SimilarItems { get; set; } = new();
     public int Count => SimilarItems.Count;
 }

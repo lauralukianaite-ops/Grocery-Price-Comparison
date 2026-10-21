@@ -39,12 +39,11 @@ public class ItemSimilarityService : IItemSimilarityService
 
         var similarItems = FindSimilarItems(itemName, allItems, threshold);
 
-        return new SimilarItemsResponseDto
-        {
-            BaseItemName = itemName,
-            Threshold = threshold,
-            SimilarItems = similarItems
-        };
+        return new SimilarItemsResponseDto(
+            BaseItemName: itemName,
+            Threshold: threshold,
+            SimilarItems: similarItems
+        );
     }
 
     public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.4)
