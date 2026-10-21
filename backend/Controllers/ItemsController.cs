@@ -35,7 +35,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet("search/{itemName}")]
-    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = 0.3)
+    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = ItemSimilarityService.DefaultThreshold)
     {
         var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
         return Ok(similarItems);
