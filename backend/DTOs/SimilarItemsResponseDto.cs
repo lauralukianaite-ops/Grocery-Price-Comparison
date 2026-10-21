@@ -1,5 +1,5 @@
 namespace backend.DTOs;
-public class SimilarItemsResponseDto(
+public record SimilarItemsResponseDto(
     string BaseItemName,
     double Threshold,
     List<SimilarItemDto> SimilarItems
