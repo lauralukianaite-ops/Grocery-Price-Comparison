@@ -9,6 +9,7 @@ namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
+    public const double DefaultThreshold = 0.3;
     private readonly IItemsRepository _itemsRepository;
 
     public ItemSimilarityService(IItemsRepository itemsRepository)
@@ -27,7 +28,7 @@ public class ItemSimilarityService : IItemSimilarityService
         return CalculateTrigramSimilarity(normalisedFirst,normalisedSecond);
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = 0.2)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = DefaultThreshold)
     {
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
@@ -46,7 +47,7 @@ public class ItemSimilarityService : IItemSimilarityService
         );
     }
 
-    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = 0.4)
+    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = DefaultThreshold)
     {
         var normalizedBaseItemName = RemoveDiacritics(itemName);
         var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
