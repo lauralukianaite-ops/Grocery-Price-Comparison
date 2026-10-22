@@ -38,7 +38,7 @@ public class BasketService : IBasketService
         // One "now" for the price window, the verdicts and the snapshot date, so they never disagree.
         var now = DateTime.UtcNow;
         var items = await _itemsRepository.GetItemsAsync();
-        var freshPrices = await _itemsRepository.GetNewestPricesWithStoreAndItemSinceAsync(now.Date.AddDays(-FreshnessDays));
+        var freshPrices = await _itemsRepository.GetNewestPricesWithStoreAndItemSinceAsync(now.Date.AddDays(-FreshnessDays), request.BannedIds);
 
         var strictness = ParseStrictness(request.Strictness);
         var rows = MergeDuplicates(request.Items!);
@@ -54,6 +54,11 @@ public class BasketService : IBasketService
         basket.CreatedAt = now;
         basket.Strictness = strictness;
         basket.RequestItems = rows;
+        basket.BannedItems = (request.BannedIds ?? new List<int>()).Distinct().Select(i => new BannedItem
+        {
+            ItemId = i
+        }).ToList();  
+        
         await _basketsRepository.SaveAsync(basket);
 
         // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
@@ -204,7 +209,8 @@ public class BasketService : IBasketService
             basket.CreatedAt,
             basket.Strictness,
             basket.Items.Select(i => new BasketRowDto(i.Position, i.ItemId, i.ItemName, i.Quantity, i.UnitCost, i.RowTotal, i.Verdict)).ToList(),
-            basket.RequestItems.Select(r => new BasketRequestItemDto(r.ItemId, r.Quantity)).ToList()
+            basket.RequestItems.Select(r => new BasketRequestItemDto(r.ItemId, r.Quantity)).ToList(),
+            basket.BannedItems.Select(i => i.ItemId).ToList()
         );
     }
 }
