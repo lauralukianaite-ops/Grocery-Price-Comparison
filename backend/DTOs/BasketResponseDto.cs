@@ -10,5 +10,6 @@ public record BasketResponseDto(
     DateTime CreatedAt,
     BasketStrictness Strictness,
     List<BasketRowDto> Rows,
-    List<BasketRequestItemDto> RequestItems
+    List<BasketRequestItemDto> RequestItems,
+    List<int> BannedIds
 );

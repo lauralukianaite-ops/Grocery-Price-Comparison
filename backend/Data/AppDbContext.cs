@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Basket> Baskets { get; set; }
     public DbSet<BasketItem> BasketItems { get; set; }
     public DbSet<BasketRequestItem> BasketRequestItems { get; set; }
+    public DbSet<BannedItem> BannedItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -69,6 +70,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<BasketRequestItem>()
             .HasOne(i => i.Basket)
             .WithMany(b => b.RequestItems)
+            .HasForeignKey(i => i.BasketId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<BannedItem>()
+            .HasOne(i => i.Basket)
+            .WithMany(b => b.BannedItems)
             .HasForeignKey(i => i.BasketId)
             .OnDelete(DeleteBehavior.Cascade);
     }
