@@ -54,11 +54,7 @@ public class BasketService : IBasketService
         basket.CreatedAt = now;
         basket.Strictness = strictness;
         basket.RequestItems = rows;
-        basket.BannedItems = (request.BannedIds ?? new List<int>()).Distinct().Select(i => new BannedItem
-        {
-            ItemId = i
-        }).ToList();  
-        
+        basket.BannedItems = ToBannedItems(request.BannedIds);
         await _basketsRepository.SaveAsync(basket);
 
         // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
@@ -125,6 +121,15 @@ public class BasketService : IBasketService
                 ItemId = group.Key,
                 Quantity = group.Sum(i => i.Quantity)
             })
+            .ToList();
+    }
+
+    // No list and an empty list mean the same thing; a banned id sent twice is stored once.
+    public List<BannedItem> ToBannedItems(List<int>? bannedIds)
+    {
+        return (bannedIds ?? new List<int>())
+            .Distinct()
+            .Select(id => new BannedItem { ItemId = id })
             .ToList();
     }
 
@@ -199,7 +204,7 @@ public class BasketService : IBasketService
     }
 
     // Both create and open answer from the stored basket, so the two can never differ.
-    private BasketResponseDto ToResponse(Basket basket)
+    public BasketResponseDto ToResponse(Basket basket)
     {
         return new BasketResponseDto(
             basket.Id,
