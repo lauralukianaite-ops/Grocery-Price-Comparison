@@ -3,5 +3,5 @@ namespace backend.DTOs;
 public record BasketRequestDto(
     List<BasketRequestItemDto>? Items, 
     string? Strictness, 
-    List<int>? BannedIds
+    List<int>? BannedIds = null
 );
