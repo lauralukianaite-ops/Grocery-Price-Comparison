@@ -4,12 +4,13 @@ using backend.DTOs;
 using backend.Entities;
 using backend.Repositories;
 using backend.Services.Interfaces;
+using backend.ValueObjects;
 
 namespace backend.Services;
 
 public class ItemSimilarityService : IItemSimilarityService
 {
-    public const double DefaultThreshold = 0.3;
+    public static readonly SimilarityScore DefaultThreshold = new(0.3);
     private readonly IItemsRepository _itemsRepository;
 
     public ItemSimilarityService(IItemsRepository itemsRepository)
@@ -17,38 +18,39 @@ public class ItemSimilarityService : IItemSimilarityService
         _itemsRepository = itemsRepository;
     }
 
-    public double CalculateSimilarity(string firstName, string secondName)
+    public SimilarityScore CalculateSimilarity(string firstName, string secondName)
     {
         if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(secondName))
-            return 0.0;
+            return SimilarityScore.Zero;
 
         var normalisedFirst = RemoveDiacritics(firstName);
         var normalisedSecond = RemoveDiacritics(secondName);
 
-        return CalculateTrigramSimilarity(normalisedFirst,normalisedSecond);
+        return CalculateTrigramSimilarity(normalisedFirst, normalisedSecond);
     }
 
-    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = DefaultThreshold)
+    public async Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, SimilarityScore? threshold = null)
     {
-        if (threshold < 0 || threshold > 1)
-            throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
-
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
         var allItems = await _itemsRepository.GetItemsWithPriceAndStoreAsync();
-
-        var similarItems = FindSimilarItems(itemName, allItems, threshold);
+        var minimumScore = threshold ?? DefaultThreshold;
+        var similarItems = FindSimilarItems(itemName, allItems, minimumScore);
 
         return new SimilarItemsResponseDto(
             BaseItemName: itemName,
-            Threshold: threshold,
+            Threshold: minimumScore.Value,
             SimilarItems: similarItems
         );
     }
 
-    public List<SimilarItemDto> FindSimilarItems(string itemName, IEnumerable<Item> allItems, double threshold = DefaultThreshold)
+    public List<SimilarItemDto> FindSimilarItems(
+        string itemName,
+        IEnumerable<Item> allItems,
+        SimilarityScore? threshold = null)
     {
+        var minimumScore = threshold ?? DefaultThreshold;
         var normalizedBaseItemName = RemoveDiacritics(itemName);
         var queryWords = normalizedBaseItemName.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
         var results = new List<SimilarItemDto>();
@@ -56,10 +58,10 @@ public class ItemSimilarityService : IItemSimilarityService
         foreach (var item in allItems)
         {
             var normalizedItemName = RemoveDiacritics(item.Name);
-            double similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
+            var similarity = CalculateTrigramSimilarity(normalizedBaseItemName, normalizedItemName);
             bool containsAnyWord = queryWords.Any(word => word.Length > 2 && normalizedItemName.Contains(word));
 
-            if (similarity >= threshold || containsAnyWord)
+            if (similarity >= minimumScore || containsAnyWord)
             {
                 var latestPricesPerStore = item.Prices
                 .Where(p => p.Store != null)
@@ -74,7 +76,7 @@ public class ItemSimilarityService : IItemSimilarityService
                         Store: latestPrice!.Store!.Name,
                         Cost: (double)latestPrice.Cost,
                         RetailCost: latestPrice.RetailCost,
-                        SimilarityScore: Math.Round(similarity, 2)
+                        SimilarityScore: Math.Round(similarity.Value, 2)
                     ));
                 }
             }
@@ -83,10 +85,10 @@ public class ItemSimilarityService : IItemSimilarityService
         return results.OrderByDescending(x => x.SimilarityScore).ToList();
     }
 
-    private double CalculateTrigramSimilarity(string str1, string str2)
+    private SimilarityScore CalculateTrigramSimilarity(string str1, string str2)
     {
         if (string.IsNullOrEmpty(str1) || string.IsNullOrEmpty(str2))
-            return 0.0;
+            return SimilarityScore.Zero;
 
         str1 = str1.ToLower().Trim();
         str2 = str2.ToLower().Trim();
@@ -95,13 +97,13 @@ public class ItemSimilarityService : IItemSimilarityService
         var trigrams2 = ExtractTrigrams(str2);
 
         if (trigrams1.Count == 0 || trigrams2.Count == 0)
-            return 0.0;
+            return SimilarityScore.Zero;
 
         int matches = trigrams1.Intersect(trigrams2).Count();
 
         int union = trigrams1.Union(trigrams2).Count();
 
-        return (double)matches / union;
+        return new SimilarityScore((double)matches / union);
     }
     private HashSet<string> ExtractTrigrams(string str)
     {

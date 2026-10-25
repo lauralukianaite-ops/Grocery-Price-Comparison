@@ -1,5 +1,6 @@
 ﻿using backend.Services;
 using backend.Services.Interfaces;
+using backend.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -35,9 +36,12 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet("search/{itemName}")]
-    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double threshold = ItemSimilarityService.DefaultThreshold)
+    public async Task<IActionResult> GetSimilarItems(string itemName, [FromQuery] double? threshold = null)
     {
-        var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, threshold);
+        SimilarityScore? scoreThreshold = threshold is null
+            ? null
+            : new backend.ValueObjects.SimilarityScore(threshold.Value);
+        var similarItems = await _similarityService.GetSimilarItemsAsync(itemName, scoreThreshold);
         return Ok(similarItems);
     }
 

@@ -3,6 +3,7 @@ using backend.Entities;
 using backend.Enums;
 using backend.Repositories;
 using backend.Services.Interfaces;
+using backend.ValueObjects;
 
 namespace backend.Services;
 
@@ -103,11 +104,11 @@ public class BasketService : IBasketService
     }
 
     // The server owns the three numbers, so they can be tuned here without the frontend knowing them.
-    public double ThresholdFor(BasketStrictness strictness)
+    public SimilarityScore ThresholdFor(BasketStrictness strictness)
     {
-        if (strictness == BasketStrictness.Broad) return 0.2;
-        if (strictness == BasketStrictness.Strict) return 0.5;
-        return 0.3;
+        if (strictness == BasketStrictness.Broad) return new SimilarityScore(0.2);
+        if (strictness == BasketStrictness.Strict) return new SimilarityScore(0.5);
+        return ItemSimilarityService.DefaultThreshold;
     }
 
     public List<BasketRequestItem> MergeDuplicates(List<BasketRequestItemDto> items)
@@ -124,7 +125,11 @@ public class BasketService : IBasketService
     }
 
     // Every store builds its own basket; the cheapest complete one wins.
-    public Basket? FindCheapestBasket(List<Item> items, List<Price> freshPrices, List<BasketRequestItem> rows, double threshold)
+    public Basket? FindCheapestBasket(
+        List<Item> items,
+        List<Price> freshPrices,
+        List<BasketRequestItem> rows,
+        SimilarityScore threshold)
     {
         var stores = freshPrices
             .Select(p => p.Store!)
@@ -151,7 +156,12 @@ public class BasketService : IBasketService
     }
 
     // A store that cannot fill every row is out.
-    private Basket? BuildBasket(Store store, List<BasketRequestItem> rows, List<Item> items, List<Price> freshPrices, double threshold)
+    private Basket? BuildBasket(
+        Store store,
+        List<BasketRequestItem> rows,
+        List<Item> items,
+        List<Price> freshPrices,
+        SimilarityScore threshold)
     {
         var storePrices = freshPrices.Where(p => p.StoreId == store.Id).ToList();
         var basket = new Basket { StoreId = store.Id, StoreName = store.Name };
@@ -168,7 +178,11 @@ public class BasketService : IBasketService
     }
 
     // Same cost -> more similar name, then lower item id, so the shown item never flips between runs.
-    private BasketItem? CheapestItem(BasketRequestItem row, List<Item> items, List<Price> storePrices, double threshold)
+    private BasketItem? CheapestItem(
+        BasketRequestItem row,
+        List<Item> items,
+        List<Price> storePrices,
+        SimilarityScore threshold)
     {
         var rowItemName = items.First(i => i.Id == row.ItemId).Name;
 
