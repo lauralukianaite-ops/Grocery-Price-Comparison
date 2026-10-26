@@ -33,11 +33,13 @@ public class ItemSimilarityBenchmark
         const int iterations = 10;
 
         var items = GenerateTestItems(itemCount);
-        var service = new ItemSimilarityService(null!);
+
+        var index = new ItemSimilarityIndex();
+        index.BuildOrUpdateIndex(items);
 
         for (int i = 0; i < 3; i++)
         {
-            service.FindSimilarItems(searchQuery, items, threshold);
+            index.Find(searchQuery, threshold);
         }
 
         var executionTimes = new List<double>();
@@ -46,7 +48,7 @@ public class ItemSimilarityBenchmark
         for (int i = 0; i < iterations; i++)
         {
             var sw = Stopwatch.StartNew();
-            var results = service.FindSimilarItems(searchQuery, items, threshold);
+            var results = index.Find(searchQuery, threshold);
             sw.Stop();
 
             executionTimes.Add(sw.Elapsed.TotalMilliseconds);

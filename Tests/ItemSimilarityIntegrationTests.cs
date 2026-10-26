@@ -30,27 +30,31 @@ public async Task GetSimilarItemsAsync_MeasuresRealDbAndAlgorithmTime()
 
     await using var dbContext = new AppDbContext(optionsBuilder.Options);
     var repository = new ItemsRepository(dbContext);
-    var service = new ItemSimilarityService(repository);
 
-    // Warm-up call
-    await repository.GetItemsWithPriceAndStoreAsync();
-
+    //DB loading time
     var dbSw = Stopwatch.StartNew();
     var itemsFromDb = await repository.GetItemsWithPriceAndStoreAsync();
     dbSw.Stop();
 
-    var algoSw = Stopwatch.StartNew();
-    var results = service.FindSimilarItems("Pienas", itemsFromDb, 0.3);
-    algoSw.Stop();
+    //Creating in-memory index
+    var indexSw = Stopwatch.StartNew();
+    var index = new ItemSimilarityIndex();
+    index.BuildOrUpdateIndex(itemsFromDb);
+    indexSw.Stop();
 
-    long totalTime = dbSw.ElapsedMilliseconds + algoSw.ElapsedMilliseconds;
+    var service = new ItemSimilarityService(index);
+
+    var searchSw = Stopwatch.StartNew();
+    var response = await service.GetSimilarItemsAsync("Pienas", 0.3);
+    searchSw.Stop();
 
     _output.WriteLine($"[INTEGRATION TEST] Products in DB: {itemsFromDb.Count}");
     _output.WriteLine($"[INTEGRATION TEST] DB loading time: {dbSw.ElapsedMilliseconds} ms");
-    _output.WriteLine($"[INTEGRATION TEST] C# Algorithm time: {algoSw.ElapsedMilliseconds} ms");
-    _output.WriteLine($"[INTEGRATION TEST] Overall time: {totalTime} ms");
+    _output.WriteLine($"[INTEGRATION TEST] In-memory Index creation time: {indexSw.ElapsedMilliseconds} ms");
+    _output.WriteLine($"[INTEGRATION TEST] Search from RAM: {searchSw.ElapsedMilliseconds} ms");
 
-    Assert.NotEmpty(results);
+    Assert.NotNull(response);
+    Assert.NotEmpty(response.SimilarItems);
 }
 
 private static string GetConnectionString()
