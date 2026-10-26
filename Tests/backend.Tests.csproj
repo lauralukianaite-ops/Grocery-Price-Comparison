@@ -18,4 +18,8 @@
     <ProjectReference Include="../backend/backend.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+  <None Include="..\backend\.env" Link=".env" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
