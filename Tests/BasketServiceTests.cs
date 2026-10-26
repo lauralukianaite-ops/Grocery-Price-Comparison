@@ -214,6 +214,38 @@ public class BasketServiceTests
         Assert.Equal(2.90m, basket.Total);
     }
 
+    // null (field left out of the JSON) and [] both give zero rows, so a first basket never fails on the missing list.
+    [Fact]
+    public void NullOrEmptyBannedIds_GiveZeroRows()
+    {
+        Assert.Empty(Service.ToBannedItems(null));
+        Assert.Empty(Service.ToBannedItems(new List<int>()));
+    }
+
+    // [4, 9, 4] becomes two rows, 4 then 9: the repeat is dropped and the first appearance keeps its place.
+    [Fact]
+    public void DuplicateBannedIds_AreStoredOnce_InFirstAppearanceOrder()
+    {
+        var banned = Service.ToBannedItems(new List<int> { 4, 9, 4 });
+
+        Assert.Equal(new List<int> { 4, 9 }, banned.Select(b => b.ItemId));
+    }
+
+    // Opening a saved basket whose banned rows are 4 and 9 shows bannedIds [4, 9], so the next recalculate can resend them.
+    [Fact]
+    public void OpeningSavedBasket_ShowsItsBannedIds()
+    {
+        var basket = new Basket
+        {
+            StoreName = "Alpha",
+            BannedItems = new List<BannedItem> { new() { ItemId = 4 }, new() { ItemId = 9 } }
+        };
+
+        var response = Service.ToResponse(basket);
+
+        Assert.Equal(new List<int> { 4, 9 }, response.BannedIds);
+    }
+
     // An exaggerated discount exists at store 1 only: asking for store 1 gives Exaggerated, store 2 gives Real.
     [Fact]
     public void VerdictFor_UsesTheStoresOwnFlag_AndRealWhenThereIsNone()

@@ -30,6 +30,7 @@ else
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddSingleton<IItemSimilarityIndex, ItemSimilarityIndex>();
 builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
 builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
@@ -51,6 +52,15 @@ builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var repo = scope.ServiceProvider.GetRequiredService<IItemsRepository>();
+    var index = scope.ServiceProvider.GetRequiredService<IItemSimilarityIndex>();
+
+    var items = repo.GetItemsWithPriceAndStoreAsync().GetAwaiter().GetResult();
+    index.BuildOrUpdateIndex(items);
+}
 
 if (app.Environment.IsDevelopment())
 {
