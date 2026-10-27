@@ -35,7 +35,7 @@ export default function ProductDetailPage() {
       <main
         id="main-content"
         tabIndex="-1"
-        className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 lg:px-8"
+        className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-16 text-center sm:px-6 lg:px-8 xl:px-10"
       >
         <h1 className="text-3xl font-semibold tracking-tight">Product not found</h1>
         <p className="mt-3 text-muted-foreground">
@@ -57,7 +57,7 @@ export default function ProductDetailPage() {
     <main
       id="main-content"
       tabIndex="-1"
-      className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
+      className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-8 sm:px-6 sm:py-12 lg:px-8 xl:px-10"
     >
       <Link
         className={cn(buttonVariants({ variant: "ghost" }), "mb-6")}
