@@ -5,7 +5,6 @@ using backend.DTOs;
 using backend.Entities;
 using backend.Enums;
 using backend.Services;
-using backend.ValueObjects;
 using Xunit;
 
 namespace backend.Tests;
@@ -13,10 +12,10 @@ namespace backend.Tests;
 public class BasketServiceTests
 {
     private static readonly DateTime Today = new DateTime(2026, 9, 27);
-    private static readonly SimilarityScore Normal = new(0.3);
+    private const double Normal = 0.3;
 
     private static readonly BasketService Service =
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(null));
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex()));
 
     private static Item I(int id, string name)
     {
@@ -193,9 +192,9 @@ public class BasketServiceTests
         var prices = new List<Price> { P(epsilon, closeMatch, 3.00m), P(zeta, farMatch, 2.00m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 1) };
 
-        Assert.Equal("Zeta", Service.FindCheapestBasket(items, prices, rows, new SimilarityScore(0.2)).StoreName);
-        Assert.Equal("Epsilon", Service.FindCheapestBasket(items, prices, rows, new SimilarityScore(0.3)).StoreName);
-        Assert.Null(Service.FindCheapestBasket(items, prices, rows, new SimilarityScore(0.5)));
+        Assert.Equal("Zeta", Service.FindCheapestBasket(items, prices, rows, 0.2).StoreName);
+        Assert.Equal("Epsilon", Service.FindCheapestBasket(items, prices, rows, 0.3).StoreName);
+        Assert.Null(Service.FindCheapestBasket(items, prices, rows, 0.5));
     }
 
     // Milk 1.20 x2 and bread 0.50 x1 give row totals 2.40 and 0.50 and a basket total of 2.90.

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using backend.Entities;
 using backend.Services;
-using backend.ValueObjects;
 using Superpower.Model;
 using Xunit;
 using System.Threading.Tasks;
@@ -24,16 +23,12 @@ public class ItemSimilarityServiceTests
             new Item { Id = 5, Name = "Pienas 3.5% 1l", Prices = new List<Price> { new Price { Cost = 1.59m, RecordedAt = DateTime.Now, Store = new Store { Name = "Barbora" } } } }
         };
 
-<<<<<<< HEAD
-        var results = new ItemSimilarityService(null).FindSimilarItems(searchQuery, items, new SimilarityScore(0.1));
-=======
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
         var service = new ItemSimilarityService(index);
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.1);
         var results = response.SimilarItems;
->>>>>>> 89db8c44eaf7df1e7cc435191447c148da7cc258
 
         foreach (var r in results)
         {
@@ -58,16 +53,12 @@ public class ItemSimilarityServiceTests
             new Item { Id = 3, Name = "Samsung ultra hd max pro phone", Prices = new List<Price> { new Price { Cost = 999.00m, RecordedAt = DateTime.Now, Store = new Store { Name = "Lidl" } } }}
         };
 
-<<<<<<< HEAD
-        var results = new ItemSimilarityService(null).FindSimilarItems(searchQuery, items, new SimilarityScore(0.8));
-=======
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
         var service = new ItemSimilarityService(index);
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.8);
         var results = response.SimilarItems;
->>>>>>> 89db8c44eaf7df1e7cc435191447c148da7cc258
 
         foreach (var r in results)
         {
@@ -88,13 +79,9 @@ public class ItemSimilarityServiceTests
             new Item { Id = 1, Name = "Ananasas" }
         };
 
-<<<<<<< HEAD
-        var results = new ItemSimilarityService(null).FindSimilarItems("", items, new SimilarityScore(0.4));
-=======
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
         var service = new ItemSimilarityService(index);
->>>>>>> 89db8c44eaf7df1e7cc435191447c148da7cc258
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.GetSimilarItemsAsync("", 0.4));
     }
@@ -119,9 +106,6 @@ public class ItemSimilarityServiceTests
                 }
             },
         };
-<<<<<<< HEAD
-        var results = new ItemSimilarityService(null).FindSimilarItems(searchQuery, items, new SimilarityScore(0.1));
-=======
 
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
@@ -129,7 +113,6 @@ public class ItemSimilarityServiceTests
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.1);
         var results = response.SimilarItems;
->>>>>>> 89db8c44eaf7df1e7cc435191447c148da7cc258
 
         Assert.Equal(2, results.Count);
 
@@ -151,9 +134,9 @@ public class ItemSimilarityServiceTests
         var index = new ItemSimilarityIndex();
         var service = new ItemSimilarityService(index);
 
-        Assert.Equal(new SimilarityScore(1), service.CalculateSimilarity("Dvaro pienas", "dvaro pienas"));
-        Assert.Equal(new SimilarityScore(1), service.CalculateSimilarity("Česnakinis batonas", "cesnakinis batonas"));
-        Assert.Equal(new SimilarityScore(1), service.CalculateSimilarity("Šviežia varškė 9%", "Sviezia varske 9%"));
+        Assert.Equal(1.0, service.CalculateSimilarity("Dvaro pienas", "dvaro pienas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Česnakinis batonas", "cesnakinis batonas"), precision: 2);
+        Assert.Equal(1.0, service.CalculateSimilarity("Šviežia varškė 9%", "Sviezia varske 9%"), precision: 2);
     }
 
     [Fact]
@@ -162,16 +145,9 @@ public class ItemSimilarityServiceTests
         var index = new ItemSimilarityIndex();
         var service = new ItemSimilarityService(index);
 
-<<<<<<< HEAD
-        Assert.Equal(SimilarityScore.Zero, service.CalculateSimilarity(null, "Pienas"));
-        Assert.Equal(SimilarityScore.Zero, service.CalculateSimilarity("Pienas", null));
-        Assert.Equal(SimilarityScore.Zero, service.CalculateSimilarity("", "Pienas"));
-        Assert.Equal(SimilarityScore.Zero, service.CalculateSimilarity("   ", "Pienas"));
-=======
         Assert.Equal(0.0, service.CalculateSimilarity(null!, "Pienas"));
         Assert.Equal(0.0, service.CalculateSimilarity("Pienas", null!));
         Assert.Equal(0.0, service.CalculateSimilarity("", "Pienas"));
         Assert.Equal(0.0, service.CalculateSimilarity("   ", "Pienas"));
->>>>>>> 89db8c44eaf7df1e7cc435191447c148da7cc258
     }
-}
+}   
