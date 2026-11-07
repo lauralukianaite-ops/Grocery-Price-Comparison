@@ -144,7 +144,7 @@ public class BasketService : IBasketService
         return stores
             .Select(store => BuildBasket(store, rows, items, freshPrices, threshold))
             .Where(basket => basket is not null)
-            .OrderBy(basket => basket!.Total)
+            .OrderBy(basket => basket!.GroceriesTotal)
             .ThenBy(basket => basket!.StoreName)
             .FirstOrDefault();
     }
@@ -173,7 +173,7 @@ public class BasketService : IBasketService
             basket.Items.Add(item);
         }
 
-        basket.Total = basket.Items.Sum(i => i.RowTotal);
+        basket.GroceriesTotal = basket.Items.Sum(i => i.RowTotal);
         return basket;
     }
 
@@ -210,7 +210,7 @@ public class BasketService : IBasketService
             basket.Id,
             basket.StoreId,
             basket.StoreName,
-            basket.Total,
+            basket.GroceriesTotal,
             basket.CreatedAt,
             basket.Strictness,
             basket.Items.Select(i => new BasketRowDto(i.Position, i.ItemId, i.ItemName, i.Quantity, i.UnitCost, i.RowTotal, i.Verdict)).ToList(),
