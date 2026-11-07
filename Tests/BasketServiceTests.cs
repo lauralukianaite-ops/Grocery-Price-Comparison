@@ -122,7 +122,7 @@ public class BasketServiceTests
         var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
 
         Assert.Equal("Beta", basket.StoreName);
-        Assert.Equal(1.70m, basket.Total);
+        Assert.Equal(1.70m, basket.GroceriesTotal);
     }
 
     // The clicked milk costs 1.50 but a similar milk in the same store costs 1.10, so the row shows the cheaper one.
@@ -210,7 +210,7 @@ public class BasketServiceTests
         var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
 
         Assert.Equal(new List<decimal> { 2.40m, 0.50m }, basket.Items.Select(i => i.RowTotal));
-        Assert.Equal(2.90m, basket.Total);
+        Assert.Equal(2.90m, basket.GroceriesTotal);
     }
 
     // null (field left out of the JSON) and [] both give zero rows, so a first basket never fails on the missing list.
