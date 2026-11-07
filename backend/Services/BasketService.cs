@@ -11,7 +11,9 @@ public class BasketService : IBasketService
     public const int MaxRows = 100;
     public const int MaxItemQuantity = 1000;
     public const int FreshnessDays = 14;
-
+    public const decimal DefaultCostPerKm = 0.2m;
+    public const double DefaultMaxKm = 100;
+    
     private static readonly List<string> StrictnessWords = new() { "broad", "normal", "strict" };
 
     private readonly IItemsRepository _itemsRepository;
@@ -73,12 +75,20 @@ public class BasketService : IBasketService
     {
         if (request.Items is null || request.Items.Count == 0)
             return new List<string> { "The list is empty." };
-
+        
         var problems = new List<string>();
-
+        if (request.CostPerKm < 0)
+            problems.Add("The cost per km must be at least 0.");
+        if (request.MaxKm <= 0)
+            problems.Add("Max kilometers must be over 0.");
+        if (request.Latitude is null && request.Longitude is not null)
+            problems.Add("Latitude not provided.");
+        if (request.Latitude is not null && request.Longitude is null)
+            problems.Add("Longitude not provided.");     
+        if (request.Latitude < -90 || request.Latitude > 90 || request.Longitude <-180 || request.Longitude > 180)
+            problems.Add("Malformed coordinates input.");
         if (request.Items.Count > MaxRows)
             problems.Add($"The list has more than {MaxRows} rows.");
-
         if (request.Strictness is not null && !StrictnessWords.Contains(request.Strictness.ToLower()))
             problems.Add("Strictness must be one of: broad, normal, strict.");
 
