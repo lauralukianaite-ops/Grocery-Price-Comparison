@@ -57,6 +57,8 @@ using (var scope = app.Services.CreateScope())
 {
     var repo = scope.ServiceProvider.GetRequiredService<IItemsRepository>();
     var index = scope.ServiceProvider.GetRequiredService<IItemSimilarityIndex>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await StoreLocationSeeder.SeedAsync(context);
 
     var items = repo.GetItemsWithPriceAndStoreAsync().GetAwaiter().GetResult();
     index.BuildOrUpdateIndex(items);
@@ -70,5 +72,4 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors(FrontendCors);
 app.MapControllers();
-
 app.Run();
