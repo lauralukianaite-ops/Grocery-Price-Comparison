@@ -232,4 +232,13 @@ public class BasketService : IBasketService
             basket.BannedItems.Select(i => i.ItemId).ToList()
         );
     }
+
+    public StoreLocation? ClosestLocation(List<StoreLocation> locations, double userLatitude, double userLongitude)
+    {
+        return locations
+            .Where(loc => loc.Latitude is not null && loc.Longitude is not null)
+            .OrderBy(loc => GeoDistance
+                .StraightDistance(userLatitude, userLongitude, loc.Latitude.Value, loc.Longitude.Value))
+            .FirstOrDefault();
+    }
 }
