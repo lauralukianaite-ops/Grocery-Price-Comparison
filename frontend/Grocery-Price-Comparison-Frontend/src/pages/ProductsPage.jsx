@@ -15,7 +15,7 @@ export default function ProductsPage() {
     <main
       id="main-content"
       tabIndex="-1"
-      className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"
+      className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-10 sm:px-6 sm:py-14 lg:px-8 xl:px-10"
     >
       <CatalogHeader
         isLoading={catalog.isLoading}

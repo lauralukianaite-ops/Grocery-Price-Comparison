@@ -15,7 +15,7 @@ public class BasketServiceTests
     private const double Normal = 0.3;
 
     private static readonly BasketService Service =
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(null));
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex()));
 
     private static Item I(int id, string name)
     {

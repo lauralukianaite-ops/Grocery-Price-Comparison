@@ -35,6 +35,7 @@ builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
 builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
 builder.Services.AddScoped<IBasketService, BasketService>();
 
