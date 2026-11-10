@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using backend.Entities;
 using backend.Services;
-using Superpower.Model;
 using Xunit;
 using System.Threading.Tasks;
 
