@@ -30,7 +30,9 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrEmpty(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
-        var similarItems = _similarityIndex.Find(itemName, threshold);
+        var matches = _similarityIndex.Find(itemName, threshold);
+
+        var similarItems = matches.SelectMany(ToDtos).ToList();
 
         var response = new SimilarItemsResponseDto(
             BaseItemName: itemName,
@@ -53,5 +55,25 @@ public class ItemSimilarityService : IItemSimilarityService
         var trigramsSecond = TextSimilarity.ExtractTrigrams(normalisedSecond);
 
         return TextSimilarity.CalculateJaccard(trigramsFirst,trigramsSecond);
+    }
+
+    public static IEnumerable<SimilarItemDto> ToDtos (SimilarItemMatch match)
+    {
+        var latestPricePerStore = match.Item.Prices
+            .Where(p => p.Store != null)
+            .GroupBy(p => p.Store!.Name)
+            .Select(g => g.OrderByDescending(p => p.RecordedAt).First());
+ 
+        foreach (var price in latestPricePerStore)
+        {
+            yield return new SimilarItemDto(
+                Id: match.Item.Id,
+                Name: match.Item.Name,
+                Store: price.Store!.Name,
+                Cost: (double)price.Cost,
+                RetailCost: price.RetailCost,
+                SimilarityScore: Math.Round(match.Score, 2)
+            );
+        }
     }
 }
