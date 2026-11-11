@@ -46,12 +46,12 @@ public class ItemSimilarityService : IItemSimilarityService
         if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(secondName))
             return 0.0;
 
-        var normalisedFirst = ItemSimilarityIndex.Normalize(firstName);
-        var normalisedSecond = ItemSimilarityIndex.Normalize(secondName);
+        var normalisedFirst = TextSimilarity.Normalize(firstName);
+        var normalisedSecond = TextSimilarity.Normalize(secondName);
 
-        var trigramsFirst = ItemSimilarityIndex.ExtractTrigrams(normalisedFirst);
-        var trigramsSecond = ItemSimilarityIndex.ExtractTrigrams(normalisedSecond);
+        var trigramsFirst = TextSimilarity.ExtractTrigrams(normalisedFirst);
+        var trigramsSecond = TextSimilarity.ExtractTrigrams(normalisedSecond);
 
-        return ItemSimilarityIndex.CalculateJaccard(trigramsFirst,trigramsSecond);
+        return TextSimilarity.CalculateJaccard(trigramsFirst,trigramsSecond);
     }
 }
