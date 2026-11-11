@@ -51,17 +51,9 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPost("refresh-index")]
-    public async Task<IActionResult> RefreshIndex(
-        [FromServices] IItemsRepository repository,
-        [FromServices] IItemSimilarityIndex index)
+    public async Task<IActionResult> RefreshIndex()
     {
-        var items = await repository.GetItemsWithPriceAndStoreAsync();
-        index.BuildOrUpdateIndex(items);
-
-        return Ok(new 
-        { 
-            message = "Index successfully renewed from database.", 
-            itemCount = items.Count 
-        });
+        await _similarityService.RefreshIndexAsync();
+        return NoContent();
     }
 }

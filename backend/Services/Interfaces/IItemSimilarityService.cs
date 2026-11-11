@@ -7,5 +7,6 @@ public interface IItemSimilarityService
 {
     Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = ItemSimilarityService.DefaultThreshold);
     double CalculateSimilarity(string firstName, string secondName);
+    Task RefreshIndexAsync();
     
 }

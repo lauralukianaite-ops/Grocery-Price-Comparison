@@ -24,7 +24,7 @@ public class ItemSimilarityServiceTests
 
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.1);
         var results = response.SimilarItems;
@@ -54,7 +54,7 @@ public class ItemSimilarityServiceTests
 
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.8);
         var results = response.SimilarItems;
@@ -80,7 +80,7 @@ public class ItemSimilarityServiceTests
 
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         await Assert.ThrowsAsync<ArgumentException>(() => service.GetSimilarItemsAsync("", 0.4));
     }
@@ -108,7 +108,7 @@ public class ItemSimilarityServiceTests
 
         var index = new ItemSimilarityIndex();
         index.BuildOrUpdateIndex(items);
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         var response = await service.GetSimilarItemsAsync(searchQuery, 0.1);
         var results = response.SimilarItems;
@@ -131,7 +131,7 @@ public class ItemSimilarityServiceTests
     public void CalculateSimilarity_ReturnsOne_ForIdenticalOrDiacriticEquivalentStrings()
     {
         var index = new ItemSimilarityIndex();
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         Assert.Equal(1.0, service.CalculateSimilarity("Dvaro pienas", "dvaro pienas"), precision: 2);
         Assert.Equal(1.0, service.CalculateSimilarity("Česnakinis batonas", "cesnakinis batonas"), precision: 2);
@@ -142,7 +142,7 @@ public class ItemSimilarityServiceTests
     public void CalculateSimilarity_ReturnsZero_WhenInputsAreNullOrEmpty()
     {
         var index = new ItemSimilarityIndex();
-        var service = new ItemSimilarityService(index);
+        var service = new ItemSimilarityService(index,null);
 
         Assert.Equal(0.0, service.CalculateSimilarity(null!, "Pienas"));
         Assert.Equal(0.0, service.CalculateSimilarity("Pienas", null!));

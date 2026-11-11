@@ -1,4 +1,5 @@
 using backend.DTOs;
+using backend.Repositories;
 using backend.Services.Interfaces;
 
 namespace backend.Services;
@@ -7,10 +8,18 @@ public class ItemSimilarityService : IItemSimilarityService
 {
     public const double DefaultThreshold = 0.3;
     private readonly IItemSimilarityIndex _similarityIndex;
+    private readonly IItemsRepository _repository;
 
-    public ItemSimilarityService(IItemSimilarityIndex similarityIndex)
+    public ItemSimilarityService(IItemSimilarityIndex similarityIndex, IItemsRepository repository)
     {
         _similarityIndex = similarityIndex;
+        _repository = repository;
+    }
+
+    public async Task RefreshIndexAsync()
+    {
+        var items = await _repository.GetItemsWithPriceAndStoreAsync();
+        _similarityIndex.BuildOrUpdateIndex(items);
     }
 
     public Task<SimilarItemsResponseDto> GetSimilarItemsAsync(string itemName, double threshold = DefaultThreshold)
