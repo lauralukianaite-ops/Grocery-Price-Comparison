@@ -8,19 +8,16 @@ public class ItemSimilarityService : IItemSimilarityService
 {
     public const double DefaultThreshold = 0.3;
     private readonly IItemSimilarityIndex _similarityIndex;
-    private readonly IItemsRepository? _repository;
+    private readonly IItemsRepository _repository;
 
     public ItemSimilarityService(IItemSimilarityIndex similarityIndex, IItemsRepository? repository = null)
     {
         _similarityIndex = similarityIndex;
-        _repository = repository;
+        _repository = repository ?? throw new InvalidOperationException("Repository is not configured for this service instance.");;
     }
 
     public async Task RefreshIndexAsync()
     {
-        if (_repository is null)
-            throw new InvalidOperationException("Repository is not configured for this service instance.");
-
         var items = await _repository.GetItemsWithPriceAndStoreAsync();
         _similarityIndex.BuildOrUpdateIndex(items);
     }
