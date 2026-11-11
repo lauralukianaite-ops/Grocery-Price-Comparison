@@ -14,6 +14,7 @@ import {
 } from "../features/catalog";
 import { APP_ROUTES } from "../router/routes";
 import { cn } from "../lib/utils";
+import SimilarProducts from "../features/catalog/ui/SimilarProducts";
 
 function resolveProduct(productId, routeProduct) {
   const requestedId = String(productId);
@@ -153,6 +154,8 @@ export default function ProductDetailPage() {
           </Card>
         )}
       </section>
+
+      <SimilarProducts key={product.id} product={product} />
 
       <ProductPriceHistoryChart priceHistory={product.priceHistory} />
     </main>
