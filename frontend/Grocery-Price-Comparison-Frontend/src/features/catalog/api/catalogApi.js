@@ -116,7 +116,7 @@ export async function getProductsByIds(productIds, signal) {
     .filter((product) => requestedIds.has(String(product.id)));
 }
 
-export async function searchItems(itemName, threshold) {
+export async function searchItems(itemName, threshold, signal) {
   const searchParams = new URLSearchParams();
 
   if (threshold !== undefined) {
@@ -128,6 +128,7 @@ export async function searchItems(itemName, threshold) {
     `/items/search/${encodeURIComponent(itemName)}${
       queryString ? `?${queryString}` : ""
     }`,
+    { signal },
   );
 
   return response.similarItems;

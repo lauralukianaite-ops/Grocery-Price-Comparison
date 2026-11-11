@@ -38,7 +38,7 @@ public class BasketService : IBasketService
         // One "now" for the price window, the verdicts and the snapshot date, so they never disagree.
         var now = DateTime.UtcNow;
         var items = await _itemsRepository.GetItemsAsync();
-        var freshPrices = await _itemsRepository.GetNewestPricesWithStoreAndItemSinceAsync(now.Date.AddDays(-FreshnessDays));
+        var freshPrices = await _itemsRepository.GetNewestPricesWithStoreAndItemSinceAsync(now.Date.AddDays(-FreshnessDays), request.BannedIds);
 
         var strictness = ParseStrictness(request.Strictness);
         var rows = MergeDuplicates(request.Items!);
@@ -54,6 +54,7 @@ public class BasketService : IBasketService
         basket.CreatedAt = now;
         basket.Strictness = strictness;
         basket.RequestItems = rows;
+        basket.BannedItems = ToBannedItems(request.BannedIds);
         await _basketsRepository.SaveAsync(basket);
 
         // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
@@ -107,7 +108,7 @@ public class BasketService : IBasketService
     {
         if (strictness == BasketStrictness.Broad) return 0.2;
         if (strictness == BasketStrictness.Strict) return 0.5;
-        return 0.3;
+        return ItemSimilarityService.DefaultThreshold;
     }
 
     public List<BasketRequestItem> MergeDuplicates(List<BasketRequestItemDto> items)
@@ -123,8 +124,21 @@ public class BasketService : IBasketService
             .ToList();
     }
 
+    // No list and an empty list mean the same thing; a banned id sent twice is stored once.
+    public List<BannedItem> ToBannedItems(List<int>? bannedIds)
+    {
+        return (bannedIds ?? new List<int>())
+            .Distinct()
+            .Select(id => new BannedItem { ItemId = id })
+            .ToList();
+    }
+
     // Every store builds its own basket; the cheapest complete one wins.
-    public Basket? FindCheapestBasket(List<Item> items, List<Price> freshPrices, List<BasketRequestItem> rows, double threshold)
+    public Basket? FindCheapestBasket(
+        List<Item> items,
+        List<Price> freshPrices,
+        List<BasketRequestItem> rows,
+        double threshold)
     {
         var stores = freshPrices
             .Select(p => p.Store!)
@@ -151,7 +165,12 @@ public class BasketService : IBasketService
     }
 
     // A store that cannot fill every row is out.
-    private Basket? BuildBasket(Store store, List<BasketRequestItem> rows, List<Item> items, List<Price> freshPrices, double threshold)
+    private Basket? BuildBasket(
+        Store store,
+        List<BasketRequestItem> rows,
+        List<Item> items,
+        List<Price> freshPrices,
+        double threshold)
     {
         var storePrices = freshPrices.Where(p => p.StoreId == store.Id).ToList();
         var basket = new Basket { StoreId = store.Id, StoreName = store.Name };
@@ -168,7 +187,11 @@ public class BasketService : IBasketService
     }
 
     // Same cost -> more similar name, then lower item id, so the shown item never flips between runs.
-    private BasketItem? CheapestItem(BasketRequestItem row, List<Item> items, List<Price> storePrices, double threshold)
+    private BasketItem? CheapestItem(
+        BasketRequestItem row,
+        List<Item> items,
+        List<Price> storePrices,
+        double threshold)
     {
         var rowItemName = items.First(i => i.Id == row.ItemId).Name;
 
@@ -194,7 +217,7 @@ public class BasketService : IBasketService
     }
 
     // Both create and open answer from the stored basket, so the two can never differ.
-    private BasketResponseDto ToResponse(Basket basket)
+    public BasketResponseDto ToResponse(Basket basket)
     {
         return new BasketResponseDto(
             basket.Id,
@@ -204,7 +227,8 @@ public class BasketService : IBasketService
             basket.CreatedAt,
             basket.Strictness,
             basket.Items.Select(i => new BasketRowDto(i.Position, i.ItemId, i.ItemName, i.Quantity, i.UnitCost, i.RowTotal, i.Verdict)).ToList(),
-            basket.RequestItems.Select(r => new BasketRequestItemDto(r.ItemId, r.Quantity)).ToList()
+            basket.RequestItems.Select(r => new BasketRequestItemDto(r.ItemId, r.Quantity)).ToList(),
+            basket.BannedItems.Select(i => i.ItemId).ToList()
         );
     }
 }

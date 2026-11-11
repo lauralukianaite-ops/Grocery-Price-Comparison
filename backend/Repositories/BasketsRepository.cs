@@ -26,6 +26,7 @@ public class BasketsRepository : IBasketsRepository
         return await _context.Baskets
             .Include(b => b.Items.OrderBy(i => i.Position))
             .Include(b => b.RequestItems.OrderBy(i => i.Position))
+            .Include(b => b.BannedItems)
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 }

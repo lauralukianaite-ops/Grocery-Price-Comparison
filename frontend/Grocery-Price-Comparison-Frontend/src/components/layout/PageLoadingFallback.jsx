@@ -6,7 +6,7 @@ export default function PageLoadingFallback() {
       id="main-content"
       aria-busy="true"
       aria-label="Loading page"
-      className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8"
+      className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10"
     >
       <Skeleton className="h-8 w-32" />
       <div className="mt-8 grid gap-8 lg:grid-cols-2">

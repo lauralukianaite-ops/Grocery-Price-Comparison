@@ -22,6 +22,27 @@ namespace backend.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("backend.Entities.BannedItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("BasketId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BasketId");
+
+                    b.ToTable("BannedItems");
+                });
+
             modelBuilder.Entity("backend.Entities.Basket", b =>
                 {
                     b.Property<Guid>("Id")
@@ -221,6 +242,17 @@ namespace backend.Migrations
                     b.ToTable("StoreLocations");
                 });
 
+            modelBuilder.Entity("backend.Entities.BannedItem", b =>
+                {
+                    b.HasOne("backend.Entities.Basket", "Basket")
+                        .WithMany("BannedItems")
+                        .HasForeignKey("BasketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Basket");
+                });
+
             modelBuilder.Entity("backend.Entities.BasketItem", b =>
                 {
                     b.HasOne("backend.Entities.Basket", "Basket")
@@ -275,6 +307,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Entities.Basket", b =>
                 {
+                    b.Navigation("BannedItems");
+
                     b.Navigation("Items");
 
                     b.Navigation("RequestItems");

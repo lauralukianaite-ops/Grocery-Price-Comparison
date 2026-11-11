@@ -12,4 +12,5 @@ public class Basket
     public BasketStrictness Strictness { get; set; }
     public List<BasketItem> Items { get; set; } = new();
     public List<BasketRequestItem> RequestItems { get; set; } = new();
+    public List<BannedItem> BannedItems { get; set; } = new();
 }
