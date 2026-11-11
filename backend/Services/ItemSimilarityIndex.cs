@@ -32,18 +32,18 @@ public class ItemSimilarityIndex : IItemSimilarityIndex
         }
     }
 
-    public List<SimilarItemDto> Find(string query, double threshold = ItemSimilarityService.DefaultThreshold)
+    public List<SimilarItemMatch> Find(string query, double threshold)
     {
         var currentItems = _indexedItems;
         var normalizedQuery = TextSimilarity.Normalize(query);
 
         if(string.IsNullOrEmpty(normalizedQuery) || currentItems.Count == 0)
-            return new List<SimilarItemDto>();
+            return new List<SimilarItemMatch>();
 
         var queryTrigrams = TextSimilarity.ExtractTrigrams(normalizedQuery);
         var queryWords = normalizedQuery.Split(Separators, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToArray();
 
-        var results = new List<SimilarItemDto>();
+        var results = new List<SimilarItemMatch>();
 
         foreach(var precomputed in currentItems)
         {
@@ -52,30 +52,9 @@ public class ItemSimilarityIndex : IItemSimilarityIndex
 
             if((similarity>0 && similarity >= threshold) || containsWord)
             {
-                AddLatestPricesPerStore(results,precomputed.Item,similarity);
+                results.Add(new SimilarItemMatch(precomputed.Item,similarity));
             }
         }
-        return results.OrderByDescending(x => x.SimilarityScore).ToList();
+        return results.OrderByDescending(x => x.Score).ToList();
     }
-
-    private static void AddLatestPricesPerStore(List<SimilarItemDto> results, Item item, double similarity)
-    {
-        var latestPricesPerStore = item.Prices
-            .Where(p => p.Store != null)
-            .GroupBy(p => p.Store!.Name)
-            .Select(g => g.OrderByDescending(p => p.RecordedAt).First());
-
-        foreach (var latestPrice in latestPricesPerStore)
-        {
-            results.Add(new SimilarItemDto(
-                Id: item.Id,
-                Name: item.Name,
-                Store: latestPrice.Store!.Name,
-                Cost: (double)latestPrice.Cost,
-                RetailCost: latestPrice.RetailCost,
-                SimilarityScore: Math.Round(similarity, 2)
-            ));
-        }
-    }
-
 };
