@@ -12,8 +12,8 @@ public class ItemSimilarityService : IItemSimilarityService
 
     public ItemSimilarityService(IItemSimilarityIndex similarityIndex, IItemsRepository? repository = null)
     {
-        _similarityIndex = similarityIndex;
-        _repository = repository ?? throw new InvalidOperationException("Repository is not configured for this service instance.");;
+        _similarityIndex = similarityIndex ?? throw new ArgumentNullException(nameof(similarityIndex));
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
     public async Task RefreshIndexAsync()
