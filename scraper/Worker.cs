@@ -17,10 +17,11 @@ public class Worker(ILogger<Worker> logger,
             foreach (var scraper in scrapers)
             {
                 stoppingToken.ThrowIfCancellationRequested();
-                await scraper.InitializeAsync();
-
+                
                 try
                 {
+                    await scraper.InitializeAsync();
+
                     // 1. creates scope for DB operations
                     using var scope = scopeFactory.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -83,9 +84,13 @@ public class Worker(ILogger<Worker> logger,
                     logger.LogInformation("Scraping cancelled!.");
                     break;
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    logger.LogError(ex, "Scraper's urls could not be read, {Store}", scraper.StoreName);
+                }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error collecting data from {Store}", scraper.StoreName);
+                    logger.LogError(ex, "Error collecting data from, {Store}", scraper.StoreName);
                 }
             }
             await Task.Delay(TimeSpan.FromHours(12), stoppingToken);

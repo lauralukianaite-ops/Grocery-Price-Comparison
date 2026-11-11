@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     var repo = scope.ServiceProvider.GetRequiredService<IItemsRepository>();
     var index = scope.ServiceProvider.GetRequiredService<IItemSimilarityIndex>();
 
-    var items = repo.GetItemsWithPriceAndStoreAsync().GetAwaiter().GetResult();
+    var items = await repo.GetItemsWithPriceAndStoreAsync();
     index.BuildOrUpdateIndex(items);
 }
 
