@@ -50,6 +50,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddHttpClient<IDistanceProvider, GoogleDistanceProvider>();
 
 var app = builder.Build();
 
