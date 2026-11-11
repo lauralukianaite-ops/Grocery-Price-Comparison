@@ -46,7 +46,7 @@ public class Worker(ILogger<Worker> logger,
                                 .FirstOrDefaultAsync(i => i.Name == scrapedItem.Name, stoppingToken);
 
                             var scrapedPrice = scrapedItem.Prices.First();
-                            scrapedPrice.StoreId = store.Id; // Dabar priskiriamas teisingos parduotuvės ID!
+                            scrapedPrice.StoreId = store.Id;
 
                             if (existingItem != null)
                             {
