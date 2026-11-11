@@ -1,17 +1,7 @@
 import { TrendingUp } from "lucide-react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { Badge } from "../../../components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "../../../components/ui/card";
+import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import {
   ChartContainer,
   ChartLegend,
@@ -98,7 +88,9 @@ function buildChartModel(priceHistory) {
 
   sortedHistory.forEach((point) => {
     const dateKey = getDateKey(point.recordedAt);
-    const storeIndex = storeIndexes.get(String(point.storeId ?? point.storeName));
+    const storeIndex = storeIndexes.get(
+      String(point.storeId ?? point.storeName),
+    );
     const store = stores[storeIndex];
     const row = rowsByDate.get(dateKey) ?? { recordedAt: dateKey };
 
@@ -217,9 +209,7 @@ export default function ProductPriceHistoryChart({ priceHistory = [] }) {
           ) : (
             <div className="rounded-lg border border-dashed px-4 py-12 text-center">
               <p className="text-sm font-medium">No price history yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Historical prices from the catalog API will appear here.
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground"></p>
             </div>
           )}
         </CardContent>

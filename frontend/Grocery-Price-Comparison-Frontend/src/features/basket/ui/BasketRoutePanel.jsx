@@ -1,102 +1,194 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Bike, Car, Footprints, MapPin, Navigation, Route, Store } from "lucide-react";
+import { useLocationStore } from "../../location";
+import { getStartingPointQuery } from "../../location/api/googleMaps";
+import { useGoogleMaps } from "../../location/model/useGoogleMaps";
+import StartingPointInput from "../../location/ui/StartingPointInput";
+import StartingPointMap from "../../location/ui/StartingPointMap";
 import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
 import { Badge } from "../../../components/ui/badge";
 import { Card, CardContent, CardHeader } from "../../../components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "../../../components/ui/toggle-group";
 
 const transportModes = [
-  { value: "car", label: "Car", icon: Car },
-  { value: "bike", label: "Bike", icon: Bike },
-  { value: "walk", label: "Walk", icon: Footprints },
+  { value: "driving", label: "Car", icon: Car },
+  { value: "bicycling", label: "Bike", icon: Bike },
+  { value: "walking", label: "Walk", icon: Footprints },
+];
+
+const exampleStops = [
+  { name: "Rimi Hyper", query: "Rimi Hyper, Vilnius, Lithuania" },
+  { name: "Lidl Žirmūnai", query: "Lidl, Žirmūnai, Vilnius, Lithuania" },
 ];
 
 export default function BasketRoutePanel() {
-  const [transport, setTransport] = useState("car");
+  const currentLocation = useLocationStore((state) => state.currentLocation);
+  const { libraries, status: mapsStatus, error: mapsError, reportError } = useGoogleMaps();
+  const [transport, setTransport] = useState("driving");
   const [startingPoint, setStartingPoint] = useState("");
+  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [mapAddress, setMapAddress] = useState("");
+  const [picking, setPicking] = useState(false);
+  const [findingAddress, setFindingAddress] = useState(false);
+  const [addressError, setAddressError] = useState("");
+  const [inputReset, setInputReset] = useState(0);
+  const requestVersion = useRef(0);
+  const originPoint = selectedPoint || (startingPoint.trim() ? { address: startingPoint } : currentLocation);
+  const origin = getStartingPointQuery(originPoint);
+  const mapQuery = mapAddress || getStartingPointQuery(selectedPoint || currentLocation) || "grocery stores in Vilnius, Lithuania";
+  const routeParams = new URLSearchParams({
+    api: "1",
+    destination: exampleStops[1].query,
+    waypoints: exampleStops[0].query,
+    travelmode: transport,
+  });
+  if (origin) routeParams.set("origin", origin);
+
+  const selectStartingPoint = useCallback((point) => {
+    requestVersion.current++;
+    setSelectedPoint(point);
+    setStartingPoint(point.address);
+    setMapAddress("");
+    setPicking(false);
+    setFindingAddress(false);
+    setAddressError("");
+  }, []);
+
+  function changeAddress(value) {
+    requestVersion.current++;
+    setStartingPoint(value);
+    setSelectedPoint(null);
+    setPicking(false);
+    setFindingAddress(false);
+    setAddressError("");
+  }
+
+  function clearStartingPoint() {
+    changeAddress("");
+    setMapAddress("");
+    setInputReset((value) => value + 1);
+  }
+
+  async function showStartingAddress(event) {
+    event.preventDefault();
+    const address = startingPoint.trim();
+    if (!address) return;
+    if (!libraries) {
+      setMapAddress(address);
+      return;
+    }
+    const version = ++requestVersion.current;
+    setInputReset((value) => value + 1);
+    setPicking(false);
+    setFindingAddress(true);
+    setAddressError("");
+    try {
+      const { results } = await new libraries.Geocoder().geocode({ address, region: "lt" });
+      if (version !== requestVersion.current) return;
+      if (!results[0]?.geometry?.location) throw new Error("Address not found");
+      const { formatted_address: label, geometry: { location } } = results[0];
+      selectStartingPoint({ address: label || address, latitude: location.lat(), longitude: location.lng() });
+    } catch {
+      if (version === requestVersion.current) setAddressError("Address not found.");
+    } finally {
+      if (version === requestVersion.current) setFindingAddress(false);
+    }
+  }
 
   return (
-    <Card className="h-fit overflow-hidden border-primary/15 shadow-sm xl:sticky xl:top-5">
-      <CardHeader className="border-b bg-primary/[0.025]">
+    <Card className="h-fit border-primary/15 shadow-sm xl:sticky xl:top-5">
+      <CardHeader className="rounded-t-xl border-b bg-primary/[0.025]">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <Route className="size-4 text-primary" aria-hidden="true" />
-              <h2 className="font-semibold">Live route & store map</h2>
+              <h2 className="font-semibold">Store map & directions</h2>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Plan the trip around your selected stores.
-            </p>
           </div>
-          <Badge variant="outline">Preview</Badge>
+          <Badge variant="outline">Google Maps</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-5">
-        <div>
+        <form onSubmit={showStartingAddress}>
           <div className="mb-2 flex items-center justify-between gap-2">
             <label className="text-sm font-medium" htmlFor="trip-start">Trip starting point</label>
-            <Button variant="ghost" size="xs" type="button" onClick={() => setStartingPoint("")}>Clear</Button>
+            <Button variant="ghost" size="xs" type="button" onClick={clearStartingPoint}>Clear</Button>
           </div>
-          <div className="relative">
-            <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="trip-start"
-              value={startingPoint}
-              onChange={(event) => setStartingPoint(event.target.value)}
-              placeholder="Add your starting address"
-              className="h-10 pl-9"
-            />
+          <StartingPointInput
+            key={inputReset}
+            value={startingPoint}
+            selectedPoint={selectedPoint}
+            libraries={libraries}
+            bias={selectedPoint || currentLocation}
+            onChange={changeAddress}
+            onSelect={selectStartingPoint}
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant={picking ? "secondary" : "outline"}
+              size="sm"
+              type="button"
+              disabled={!libraries}
+              aria-pressed={picking && Boolean(libraries)}
+              onClick={() => {
+                requestVersion.current++;
+                setFindingAddress(false);
+                setInputReset((value) => value + 1);
+                setPicking((value) => !value);
+              }}
+            >
+              <MapPin aria-hidden="true" /> {picking ? "Cancel map selection" : "Choose on map"}
+            </Button>
+            <Button variant="outline" size="sm" type="submit" disabled={!startingPoint.trim() || findingAddress}>
+              {findingAddress ? "Finding address…" : "Show address on map"}
+            </Button>
           </div>
-        </div>
+          {addressError && <p role="alert" className="mt-2 text-xs text-destructive">{addressError}</p>}
+        </form>
+
+        {mapsStatus !== "ready" && <p role="status" className="text-xs text-muted-foreground">
+          {mapsStatus === "loading" ? "Loading Google Maps…"
+            : mapsError || "Address suggestions and map selection unavailable."}
+        </p>}
 
         <div>
           <p className="mb-2 text-sm font-medium">Transport mode</p>
-          <ToggleGroup
-            value={[transport]}
-            onValueChange={(value) => value[0] && setTransport(value[0])}
-            variant="outline"
-            size="sm"
-            spacing={0}
-            aria-label="Transport mode"
-            className="grid w-full grid-cols-3"
-          >
+          <ToggleGroup value={[transport]} onValueChange={(value) => value[0] && setTransport(value[0])} variant="outline" size="sm" spacing={0} aria-label="Transport mode" className="grid w-full grid-cols-3">
             {transportModes.map(({ value, label, icon: Icon }) => (
               <ToggleGroupItem key={value} value={value} className="w-full justify-center gap-1.5">
-                <Icon className="size-3.5" aria-hidden="true" />
-                {label}
+                <Icon className="size-3.5" aria-hidden="true" />{label}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         </div>
 
-        <div className="relative h-64 overflow-hidden rounded-xl border bg-[radial-gradient(circle_at_18%_18%,hsl(var(--primary)/0.16)_0,transparent_28%),radial-gradient(circle_at_78%_72%,hsl(var(--accent)/0.6)_0,transparent_34%),linear-gradient(135deg,hsl(var(--muted))_0%,hsl(var(--background))_100%)] xl:h-72">
-          <div className="absolute -left-8 top-16 h-14 w-[130%] -rotate-6 rounded-full border-y border-primary/15 bg-background/35" />
-          <div className="absolute -left-10 top-28 h-8 w-[130%] rotate-12 rounded-full border-y border-primary/10 bg-background/45" />
-          <svg className="absolute inset-0 size-full" viewBox="0 0 420 230" aria-label="Route preview map" role="img">
-            <path d="M52 174 L124 143 L205 152 L274 88 L358 122" fill="none" stroke="hsl(var(--primary))" strokeWidth="5" strokeDasharray="8 7" strokeLinecap="round" />
-            <circle cx="52" cy="174" r="10" fill="hsl(var(--primary))" />
-            <circle cx="205" cy="152" r="10" fill="hsl(var(--destructive))" />
-            <circle cx="358" cy="122" r="10" fill="hsl(221 83% 53%)" />
-          </svg>
-          <span className="absolute bottom-3 left-3 rounded-md bg-background/90 px-2 py-1 text-xs font-medium shadow-sm">Start</span>
-          <span className="absolute bottom-[3.6rem] left-[42%] rounded-md bg-destructive px-2 py-1 text-xs font-medium text-destructive-foreground shadow-sm">Rimi</span>
-          <span className="absolute right-3 top-[4.4rem] rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white shadow-sm">Lidl</span>
-          <div className="absolute inset-x-3 bottom-3 flex items-center justify-between rounded-lg border bg-background/95 p-2.5 shadow-sm">
-            <span className="text-xs text-muted-foreground"><strong className="text-foreground">4.2 km</strong> · 14 min by {transport}</span>
-            <Navigation className="size-4 text-primary" aria-hidden="true" />
+        {libraries ? (
+          <StartingPointMap
+            libraries={libraries}
+            point={selectedPoint || currentLocation}
+            picking={picking}
+            onPick={selectStartingPoint}
+            onCancel={() => setPicking(false)}
+            onError={reportError}
+          />
+        ) : (
+          <div className="h-80 overflow-hidden rounded-xl border bg-muted xl:h-96">
+            <iframe title="Google Maps store map" src={`https://www.google.com/maps?${new URLSearchParams({ q: mapQuery, output: "embed" })}`} className="size-full border-0" loading="lazy" allowFullScreen referrerPolicy="no-referrer-when-downgrade" />
           </div>
-        </div>
+        )}
 
+        <p className="text-xs text-muted-foreground">Example stops</p>
         <div className="grid grid-cols-2 gap-2">
-          {[["Rimi Hyper", "Open · 3 min"], ["Lidl Žirmūnai", "Open · 8 min"]].map(([name, status]) => (
-            <div key={name} className="rounded-lg border p-2.5">
+          {exampleStops.map(({ name, query }, index) => (
+            <a key={query} href={`https://www.google.com/maps/search/?${new URLSearchParams({ api: "1", query })}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border p-2.5 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring">
               <div className="flex items-center gap-1.5 text-sm font-medium"><Store className="size-3.5 text-primary" aria-hidden="true" />{name}</div>
-              <p className="mt-1 text-xs text-emerald-700">{status}</p>
-            </div>
+              <p className="mt-1 text-xs text-muted-foreground">Stop {index + 1}</p>
+            </a>
           ))}
         </div>
-        <Button className="w-full" type="button"><Navigation aria-hidden="true" /> Open route in maps</Button>
+        <Button className="w-full" nativeButton={false} render={<a href={`https://www.google.com/maps/dir/?${routeParams}`} target="_blank" rel="noopener noreferrer" />}>
+          <Navigation aria-hidden="true" /> Open route in Google Maps
+        </Button>
       </CardContent>
     </Card>
   );
