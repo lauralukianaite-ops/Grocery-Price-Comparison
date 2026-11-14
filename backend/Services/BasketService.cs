@@ -1,3 +1,4 @@
+using backend.Data;
 using backend.DTOs;
 using backend.Entities;
 using backend.Enums;
@@ -20,13 +21,15 @@ public class BasketService : IBasketService
     private readonly IBasketsRepository _basketsRepository;
     private readonly IFakeDiscountService _fakeDiscountService;
     private readonly IItemSimilarityService _similarityService;
+    private readonly IDistanceProvider _distanceProvider;
 
-    public BasketService(IItemsRepository itemsRepository, IBasketsRepository basketsRepository, IFakeDiscountService fakeDiscountService, IItemSimilarityService similarityService)
+    public BasketService(IItemsRepository itemsRepository, IBasketsRepository basketsRepository, IFakeDiscountService fakeDiscountService, IItemSimilarityService similarityService, IDistanceProvider distanceProvider)
     {
         _itemsRepository = itemsRepository;
         _basketsRepository = basketsRepository;
         _fakeDiscountService = fakeDiscountService;
         _similarityService = similarityService;
+        _distanceProvider = distanceProvider;
     }
 
     public async Task<List<string>> FindProblemsAsync(BasketRequestDto request)
@@ -44,23 +47,83 @@ public class BasketService : IBasketService
 
         var strictness = ParseStrictness(request.Strictness);
         var rows = MergeDuplicates(request.Items!);
-        var basket = FindCheapestBasket(items, freshPrices, rows, ThresholdFor(strictness));
-        if (basket is null) return null;
+        var baskets = CompleteBaskets(items, freshPrices, rows, ThresholdFor(strictness));
+        if (baskets.Count == 0) return null;
+        
+        var locations = await _basketsRepository.GetAllLocationsAsync();
+        
+        // filter which geographically are near enough 
 
-        foreach (var item in basket.Items)
-        {
-            var history = await _itemsRepository.GetPriceWithStoreByItemIdAsync(item.ItemId);
-            item.Verdict = VerdictFor(history, basket.StoreId, now.Date);
+        var nearBaskets = new List<Basket>();
+        var shops = new List<StoreLocation>();
+
+        if (request.Latitude is not null && request.Longitude is not null) {
+            foreach (var candidate in baskets)
+            {
+                var shop = ShopInRange(candidate, locations, request.Latitude.Value, request.Longitude.Value,
+                    request.MaxKm ?? DefaultMaxKm);
+                if (shop is null) continue;
+                nearBaskets.Add(candidate);
+                shops.Add(shop);
+            }
+            if (shops.Count == 0) return null;
+
+            // find each with google
+            var distances = await _distanceProvider.RoadDistanceKmAsync(request.Latitude.Value, request.Longitude.Value, shops);
+            baskets = AddTravel(nearBaskets, shops, distances, request.CostPerKm ?? DefaultCostPerKm, request.MaxKm ?? DefaultMaxKm);
         }
 
-        basket.CreatedAt = now;
-        basket.Strictness = strictness;
-        basket.RequestItems = rows;
-        basket.BannedItems = ToBannedItems(request.BannedIds);
-        await _basketsRepository.SaveAsync(basket);
+        var winner = WinnerBasket(baskets);
+        if (winner is null) return null;
+        
+        foreach (var item in winner.Items)
+        {
+            var history = await _itemsRepository.GetPriceWithStoreByItemIdAsync(item.ItemId);
+            item.Verdict = VerdictFor(history, winner.StoreId, now.Date);
+        }
+        winner.CreatedAt = now;
+        winner.Strictness = strictness;
+        winner.RequestItems = rows;
+        winner.BannedItems = ToBannedItems(request.BannedIds);
+        await _basketsRepository.SaveAsync(winner);
 
         // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
-        return await GetAsync(basket.Id);
+        return await GetAsync(winner.Id);
+    }
+
+    public StoreLocation? ShopInRange(Basket basket, List<StoreLocation> locations, double latitude, double longitude,
+        double maxKm)
+    {
+        var storeLocations = locations
+                .Where(l => l.StoreId == basket.StoreId)
+                .ToList();
+        var closest = ClosestLocation(storeLocations, latitude, longitude);
+        if (closest is null) return null;
+        if (GeoDistance.StraightDistance(latitude, longitude, closest.Latitude.Value, closest.Longitude.Value) >
+            maxKm) return null;
+        return closest;
+    }
+
+    public List<Basket> AddTravel(List<Basket> baskets, List<StoreLocation> shops, List<double?> roadKm, decimal costPerKm, double maxKm)
+    {
+        List<Basket> res = new List<Basket>();
+        for (var i = 0; i < baskets.Count; i++)
+        {
+            if (roadKm[i] > maxKm || roadKm[i] is null) continue;
+            baskets[i].DistanceKm = roadKm[i];
+            baskets[i].LocationAddress = shops[i].Address;
+            baskets[i].TravelCost = Math.Round((decimal)roadKm[i]! * 2 * costPerKm, 2);
+            res.Add(baskets[i]);
+        }
+        return res;
+    }
+
+    public Basket? WinnerBasket(List<Basket> baskets)
+    {
+        return baskets
+            .OrderBy(b => b.TravelCost + b.GroceriesTotal)
+            .ThenBy(b => b.StoreName)
+            .FirstOrDefault();
     }
 
     public async Task<BasketResponseDto?> GetAsync(Guid id)
@@ -144,7 +207,7 @@ public class BasketService : IBasketService
     }
 
     // Every store builds its own basket; the cheapest complete one wins.
-    public Basket? FindCheapestBasket(List<Item> items, List<Price> freshPrices, List<BasketRequestItem> rows, double threshold)
+    public List<Basket> CompleteBaskets(List<Item> items, List<Price> freshPrices, List<BasketRequestItem> rows, double threshold)
     {
         var stores = freshPrices
             .Select(p => p.Store!)
@@ -154,11 +217,9 @@ public class BasketService : IBasketService
         return stores
             .Select(store => BuildBasket(store, rows, items, freshPrices, threshold))
             .Where(basket => basket is not null)
-            .OrderBy(basket => basket!.GroceriesTotal)
-            .ThenBy(basket => basket!.StoreName)
-            .FirstOrDefault();
+            .ToList()!;
     }
-
+    
     // A discount that cannot be proven bad counts as real, so the frontend only shows a badge for exaggerated or false.
     public DiscountVerdict VerdictFor(List<Price> itemPrices, int storeId, DateTime today)
     {
@@ -233,6 +294,7 @@ public class BasketService : IBasketService
         );
     }
 
+    // Returns the closest location for a store chain
     public StoreLocation? ClosestLocation(List<StoreLocation> locations, double userLatitude, double userLongitude)
     {
         return locations

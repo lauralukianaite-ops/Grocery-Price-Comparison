@@ -15,7 +15,7 @@ public class BasketServiceTests
     private const double Normal = 0.3;
 
     private static readonly BasketService Service =
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(null));
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(null), null);
 
     private static Item I(int id, string name)
     {
@@ -119,7 +119,7 @@ public class BasketServiceTests
         var prices = new List<Price> { P(gamma, milk, 0.50m), P(beta, milk, 1.20m), P(beta, bread, 0.50m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 1), Row(2, 2, 1) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, bread }, prices, rows, Normal));
 
         Assert.Equal("Beta", basket.StoreName);
         Assert.Equal(1.70m, basket.GroceriesTotal);
@@ -134,7 +134,7 @@ public class BasketServiceTests
         var alpha = S(1, "Alpha");
         var prices = new List<Price> { P(alpha, milk, 1.50m), P(alpha, cheaper, 1.10m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, cheaper }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, cheaper }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal));
 
         var row = Assert.Single(basket.Items);
         Assert.Equal(2, row.ItemId);
@@ -151,7 +151,7 @@ public class BasketServiceTests
         var alpha = S(1, "Alpha");
         var prices = new List<Price> { P(alpha, similar, 1.00m), P(alpha, clicked, 1.00m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { clicked, similar }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { clicked, similar }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal));
 
         Assert.Equal(9, Assert.Single(basket.Items).ItemId);
 
@@ -159,7 +159,7 @@ public class BasketServiceTests
         var twinEarlier = I(2, "pienas 1l");
         prices = new List<Price> { P(alpha, clicked, 2.00m), P(alpha, twinLater, 1.00m), P(alpha, twinEarlier, 1.00m) };
 
-        basket = Service.FindCheapestBasket(new List<Item> { clicked, twinLater, twinEarlier }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal);
+        basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { clicked, twinLater, twinEarlier }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal));
 
         Assert.Equal(2, Assert.Single(basket.Items).ItemId);
     }
@@ -173,7 +173,7 @@ public class BasketServiceTests
         var tieA = S(2, "Tie-A");
         var prices = new List<Price> { P(tieB, kefir, 2.00m), P(tieA, kefir, 2.00m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { kefir }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { kefir }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal));
 
         Assert.Equal("Tie-A", basket.StoreName);
     }
@@ -192,9 +192,9 @@ public class BasketServiceTests
         var prices = new List<Price> { P(epsilon, closeMatch, 3.00m), P(zeta, farMatch, 2.00m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 1) };
 
-        Assert.Equal("Zeta", Service.FindCheapestBasket(items, prices, rows, 0.2).StoreName);
-        Assert.Equal("Epsilon", Service.FindCheapestBasket(items, prices, rows, 0.3).StoreName);
-        Assert.Null(Service.FindCheapestBasket(items, prices, rows, 0.5));
+        Assert.Equal("Zeta", Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.2)).StoreName);
+        Assert.Equal("Epsilon", Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.3)).StoreName);
+        Assert.Null(Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.5)));
     }
 
     // Milk 1.20 x2 and bread 0.50 x1 give row totals 2.40 and 0.50 and a basket total of 2.90.
@@ -207,7 +207,7 @@ public class BasketServiceTests
         var prices = new List<Price> { P(beta, milk, 1.20m), P(beta, bread, 0.50m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 2), Row(2, 2, 1) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, bread }, prices, rows, Normal));
 
         Assert.Equal(new List<decimal> { 2.40m, 0.50m }, basket.Items.Select(i => i.RowTotal));
         Assert.Equal(2.90m, basket.GroceriesTotal);
