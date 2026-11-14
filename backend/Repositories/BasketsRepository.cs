@@ -29,4 +29,9 @@ public class BasketsRepository : IBasketsRepository
             .Include(b => b.BannedItems)
             .FirstOrDefaultAsync(b => b.Id == id);
     }
+
+    public async Task<List<StoreLocation>> GetAllLocationsAsync()
+    {
+        return await _context.StoreLocations.ToListAsync();
+    }
 }
