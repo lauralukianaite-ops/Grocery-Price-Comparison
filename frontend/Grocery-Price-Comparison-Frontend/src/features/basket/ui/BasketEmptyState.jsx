@@ -10,7 +10,7 @@ export default function BasketEmptyState() {
     <main
       id="main-content"
       tabIndex="-1"
-      className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8"
+      className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-16 sm:px-6 lg:px-8 xl:px-10"
     >
       <Card className="border-dashed py-14 text-center">
         <CardContent>

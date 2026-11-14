@@ -35,6 +35,7 @@ builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
 builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
 builder.Services.AddScoped<IBasketService, BasketService>();
 
@@ -61,7 +62,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await StoreLocationSeeder.SeedAsync(context);
 
-    var items = repo.GetItemsWithPriceAndStoreAsync().GetAwaiter().GetResult();
+    var items = await repo.GetItemsWithPriceAndStoreAsync();
     index.BuildOrUpdateIndex(items);
 }
 

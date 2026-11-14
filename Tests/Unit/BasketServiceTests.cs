@@ -17,8 +17,8 @@ public class BasketServiceTests
     private const double UserLatitude = 54.6872;
     private const double UserLongitude = 25.2797;
 
-    private static readonly BasketService Service =
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(null), null);
+    private static readonly BasketService Service = 
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex()), null);
 
     private static Item I(int id, string name)
     {

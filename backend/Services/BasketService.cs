@@ -158,7 +158,7 @@ public class BasketService : IBasketService
     {
         if (strictness == BasketStrictness.Broad) return 0.2;
         if (strictness == BasketStrictness.Strict) return 0.5;
-        return 0.3;
+        return ItemSimilarityService.DefaultThreshold;
     }
 
     // The same item sent twice becomes one row with the quantities added, in first appearance order.

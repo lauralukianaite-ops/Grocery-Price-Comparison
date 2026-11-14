@@ -11,7 +11,7 @@ const FOOTER_LINKS = [
 export default function WebsiteFooter() {
   return (
     <footer className="border-t border-border bg-muted/30">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[var(--page-content-width)] px-4 py-10 sm:px-6 lg:px-8 xl:px-10">
         <div className="flex flex-col gap-7 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-md">
             <Link
