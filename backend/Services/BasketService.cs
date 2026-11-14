@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using backend.Data;
 using backend.DTOs;
 using backend.Entities;
@@ -38,7 +39,7 @@ public class BasketService : IBasketService
         return FindProblems(request, items.Select(i => i.Id).ToList());
     }
 
-    public async Task<BasketResponseDto?> CreateAsync(BasketRequestDto request)
+    public async Task<BasketResult> CreateAsync(BasketRequestDto request)
     {
         // One "now" for the price window, the verdicts and the snapshot date, so they never disagree.
         var now = DateTime.UtcNow;
@@ -48,7 +49,7 @@ public class BasketService : IBasketService
         var strictness = ParseStrictness(request.Strictness);
         var rows = MergeDuplicates(request.Items!);
         var baskets = CompleteBaskets(items, freshPrices, rows, ThresholdFor(strictness));
-        if (baskets.Count == 0) return null;
+        if (baskets.Count == 0) return new BasketResult(BasketOutcome.NoCompleteBasket, null);
         
         var locations = await _basketsRepository.GetAllLocationsAsync();
         
@@ -66,15 +67,22 @@ public class BasketService : IBasketService
                 nearBaskets.Add(candidate);
                 shops.Add(shop);
             }
-            if (shops.Count == 0) return null;
-
-            // find each with google
-            var distances = await _distanceProvider.RoadDistanceKmAsync(request.Latitude.Value, request.Longitude.Value, shops);
-            baskets = AddTravel(nearBaskets, shops, distances, request.CostPerKm ?? DefaultCostPerKm, request.MaxKm ?? DefaultMaxKm);
+            if (shops.Count == 0) return new BasketResult(BasketOutcome.NoStoreInRange, null);
+            
+            try 
+            {
+                var distances = await _distanceProvider.RoadDistanceKmAsync(request.Latitude.Value, request.Longitude.Value, shops);
+                baskets = AddTravel(nearBaskets, shops, distances, request.CostPerKm ?? DefaultCostPerKm, request.MaxKm ?? DefaultMaxKm);
+            }
+            catch (HttpRequestException)
+            {
+                return new BasketResult(BasketOutcome.DistanceUnavailable, null);
+            }
         }
 
         var winner = WinnerBasket(baskets);
-        if (winner is null) return null;
+        // Complete baskets existed, so an empty list here means the road distance cut removed them all.
+        if (winner is null) return new BasketResult(BasketOutcome.NoStoreInRange, null);
         
         foreach (var item in winner.Items)
         {
@@ -88,7 +96,7 @@ public class BasketService : IBasketService
         await _basketsRepository.SaveAsync(winner);
 
         // Answer from the stored row, so create and open can never differ (the database keeps microseconds, .NET keeps more).
-        return await GetAsync(winner.Id);
+        return new BasketResult(BasketOutcome.Created, await GetAsync(winner.Id));
     }
 
     public StoreLocation? ShopInRange(Basket basket, List<StoreLocation> locations, double latitude, double longitude,
