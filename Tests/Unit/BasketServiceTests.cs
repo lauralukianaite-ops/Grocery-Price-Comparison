@@ -13,9 +13,12 @@ public class BasketServiceTests
 {
     private static readonly DateTime Today = new DateTime(2026, 9, 27);
     private const double Normal = 0.3;
+    // The user stands in Vilnius centre; 0.01 of a degree of latitude north of it is about 1.1 km.
+    private const double UserLatitude = 54.6872;
+    private const double UserLongitude = 25.2797;
 
-    private static readonly BasketService Service =
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex()));
+    private static readonly BasketService Service = 
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex()), null);
 
     private static Item I(int id, string name)
     {
@@ -35,6 +38,11 @@ public class BasketServiceTests
     private static BasketRequestItem Row(int position, int itemId, int quantity)
     {
         return new BasketRequestItem { Position = position, ItemId = itemId, Quantity = quantity };
+    }
+
+    private static StoreLocation Loc(int storeId, string address, double latitude, double longitude)
+    {
+        return new StoreLocation { StoreId = storeId, Address = address, Latitude = latitude, Longitude = longitude };
     }
 
     private static BasketRequestDto Request(string strictness, params BasketRequestItemDto[] items)
@@ -119,10 +127,10 @@ public class BasketServiceTests
         var prices = new List<Price> { P(gamma, milk, 0.50m), P(beta, milk, 1.20m), P(beta, bread, 0.50m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 1), Row(2, 2, 1) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, bread }, prices, rows, Normal));
 
         Assert.Equal("Beta", basket.StoreName);
-        Assert.Equal(1.70m, basket.Total);
+        Assert.Equal(1.70m, basket.GroceriesTotal);
     }
 
     // The clicked milk costs 1.50 but a similar milk in the same store costs 1.10, so the row shows the cheaper one.
@@ -134,7 +142,7 @@ public class BasketServiceTests
         var alpha = S(1, "Alpha");
         var prices = new List<Price> { P(alpha, milk, 1.50m), P(alpha, cheaper, 1.10m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, cheaper }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, cheaper }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal));
 
         var row = Assert.Single(basket.Items);
         Assert.Equal(2, row.ItemId);
@@ -151,7 +159,7 @@ public class BasketServiceTests
         var alpha = S(1, "Alpha");
         var prices = new List<Price> { P(alpha, similar, 1.00m), P(alpha, clicked, 1.00m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { clicked, similar }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { clicked, similar }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal));
 
         Assert.Equal(9, Assert.Single(basket.Items).ItemId);
 
@@ -159,7 +167,7 @@ public class BasketServiceTests
         var twinEarlier = I(2, "pienas 1l");
         prices = new List<Price> { P(alpha, clicked, 2.00m), P(alpha, twinLater, 1.00m), P(alpha, twinEarlier, 1.00m) };
 
-        basket = Service.FindCheapestBasket(new List<Item> { clicked, twinLater, twinEarlier }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal);
+        basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { clicked, twinLater, twinEarlier }, prices, new List<BasketRequestItem> { Row(1, 9, 1) }, Normal));
 
         Assert.Equal(2, Assert.Single(basket.Items).ItemId);
     }
@@ -173,7 +181,7 @@ public class BasketServiceTests
         var tieA = S(2, "Tie-A");
         var prices = new List<Price> { P(tieB, kefir, 2.00m), P(tieA, kefir, 2.00m) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { kefir }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { kefir }, prices, new List<BasketRequestItem> { Row(1, 1, 1) }, Normal));
 
         Assert.Equal("Tie-A", basket.StoreName);
     }
@@ -192,9 +200,9 @@ public class BasketServiceTests
         var prices = new List<Price> { P(epsilon, closeMatch, 3.00m), P(zeta, farMatch, 2.00m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 1) };
 
-        Assert.Equal("Zeta", Service.FindCheapestBasket(items, prices, rows, 0.2).StoreName);
-        Assert.Equal("Epsilon", Service.FindCheapestBasket(items, prices, rows, 0.3).StoreName);
-        Assert.Null(Service.FindCheapestBasket(items, prices, rows, 0.5));
+        Assert.Equal("Zeta", Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.2)).StoreName);
+        Assert.Equal("Epsilon", Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.3)).StoreName);
+        Assert.Null(Service.WinnerBasket(Service.CompleteBaskets(items, prices, rows, 0.5)));
     }
 
     // Milk 1.20 x2 and bread 0.50 x1 give row totals 2.40 and 0.50 and a basket total of 2.90.
@@ -207,10 +215,79 @@ public class BasketServiceTests
         var prices = new List<Price> { P(beta, milk, 1.20m), P(beta, bread, 0.50m) };
         var rows = new List<BasketRequestItem> { Row(1, 1, 2), Row(2, 2, 1) };
 
-        var basket = Service.FindCheapestBasket(new List<Item> { milk, bread }, prices, rows, Normal);
+        var basket = Service.WinnerBasket(Service.CompleteBaskets(new List<Item> { milk, bread }, prices, rows, Normal));
 
         Assert.Equal(new List<decimal> { 2.40m, 0.50m }, basket.Items.Select(i => i.RowTotal));
-        Assert.Equal(2.90m, basket.Total);
+        Assert.Equal(2.90m, basket.GroceriesTotal);
+    }
+
+    // Maxima's shops are 11 km and 1.1 km from the user, Iki's is 0.1 km: a Maxima basket gets the 1.1 km shop, not Iki's nearer one.
+    [Fact]
+    public void ShopInRange_PicksTheNearestShopOfTheBasketsOwnStore()
+    {
+        var shops = new List<StoreLocation>
+        {
+            Loc(1, "Maxima far", 54.7872, 25.2797),
+            Loc(1, "Maxima near", 54.6972, 25.2797),
+            Loc(2, "Iki nearest", 54.6882, 25.2797)
+        };
+        var maximaBasket = new Basket { StoreId = 1 };
+
+        var shop = Service.ShopInRange(maximaBasket, shops, UserLatitude, UserLongitude, 100);
+
+        Assert.Equal("Maxima near", shop.Address);
+    }
+
+    // Rimi's only shop is 111 km away: out at max 100 km, in at max 120 km. Store 3 has no shops, so it is out at any distance.
+    [Fact]
+    public void ShopInRange_BeyondMaxKmOrNoShops_GivesNull()
+    {
+        var shops = new List<StoreLocation> { Loc(1, "Rimi far", 55.6872, 25.2797) };
+        var rimiBasket = new Basket { StoreId = 1 };
+        var basketOfStoreWithoutShops = new Basket { StoreId = 3 };
+
+        Assert.Null(Service.ShopInRange(rimiBasket, shops, UserLatitude, UserLongitude, 100));
+        Assert.NotNull(Service.ShopInRange(rimiBasket, shops, UserLatitude, UserLongitude, 120));
+        Assert.Null(Service.ShopInRange(basketOfStoreWithoutShops, shops, UserLatitude, UserLongitude, 100));
+    }
+
+    // At 0.20 per km and max 100 km: Rimi has no road and Iki is 120 km by road, so both are out; Maxima at 34 km costs 34 x 2 x 0.20 = 13.60.
+    [Fact]
+    public void AddTravel_DropsNoRoadAndTooFar_AndCostsTheRoundTrip()
+    {
+        var baskets = new List<Basket>
+        {
+            new() { StoreName = "Rimi" },
+            new() { StoreName = "Maxima" },
+            new() { StoreName = "Iki" }
+        };
+        var shops = new List<StoreLocation>
+        {
+            Loc(1, "Rimi street 1", UserLatitude, UserLongitude),
+            Loc(2, "Maxima street 2", UserLatitude, UserLongitude),
+            Loc(3, "Iki street 3", UserLatitude, UserLongitude)
+        };
+        var roadKm = new List<double?> { null, 34, 120 };
+
+        var withTravel = Service.AddTravel(baskets, shops, roadKm, 0.20m, 100);
+
+        var maxima = Assert.Single(withTravel);
+        Assert.Equal("Maxima", maxima.StoreName);
+        Assert.Equal(34.0, maxima.DistanceKm);
+        Assert.Equal("Maxima street 2", maxima.LocationAddress);
+        Assert.Equal(13.60m, maxima.TravelCost);
+    }
+
+    // Maxima: 20.00 groceries + 13.60 travel = 33.60. Iki: 22.00 + 1.20 = 23.20, so Iki wins although its groceries cost more.
+    [Fact]
+    public void WinnerBasket_CountsTravel_NotGroceriesAlone()
+    {
+        var maxima = new Basket { StoreName = "Maxima", GroceriesTotal = 20.00m, TravelCost = 13.60m };
+        var iki = new Basket { StoreName = "Iki", GroceriesTotal = 22.00m, TravelCost = 1.20m };
+
+        var winner = Service.WinnerBasket(new List<Basket> { maxima, iki });
+
+        Assert.Equal("Iki", winner.StoreName);
     }
 
     // null (field left out of the JSON) and [] both give zero rows, so a first basket never fails on the missing list.

@@ -51,6 +51,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddHttpClient<IDistanceProvider, GoogleDistanceProvider>();
 
 var app = builder.Build();
 
@@ -58,6 +59,8 @@ using (var scope = app.Services.CreateScope())
 {
     var repo = scope.ServiceProvider.GetRequiredService<IItemsRepository>();
     var index = scope.ServiceProvider.GetRequiredService<IItemSimilarityIndex>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await StoreLocationSeeder.SeedAsync(context);
 
     var items = await repo.GetItemsWithPriceAndStoreAsync();
     index.BuildOrUpdateIndex(items);
@@ -71,5 +74,4 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors(FrontendCors);
 app.MapControllers();
-
 app.Run();
