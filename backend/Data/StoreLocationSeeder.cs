@@ -19,9 +19,10 @@ public static class StoreLocationSeeder
     
     public static async Task SeedAsync(AppDbContext context)
     { 
-        if (await context.StoreLocations.AnyAsync()) return; 
-        
-        var stores = await context.Stores.ToListAsync(); 
+        var stores = await context.Stores
+            .Where(s => !s.Locations.Any())
+            .ToListAsync();
+        if (stores.Count == 0) return;
         var locations = new List<StoreLocation>();
         
         using var document = JsonDocument.Parse(File.ReadAllText("Data/StoreLocations.geojson"));
