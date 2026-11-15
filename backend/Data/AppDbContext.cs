@@ -55,7 +55,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Basket>()
             .Property(b => b.StoreName).HasMaxLength(100);
         modelBuilder.Entity<Basket>()
-            .Property(b => b.Total).HasPrecision(10, 2);
+            .Property(b => b.LocationAddress).HasMaxLength(300);
+        modelBuilder.Entity<Basket>()
+            .Property(b => b.GroceriesTotal).HasPrecision(10, 2);
+        modelBuilder.Entity<Basket>()
+            .Property(b => b.TravelCost).HasPrecision(10, 2);
 
         modelBuilder.Entity<BasketItem>()
             .Property(i => i.UnitCost).HasPrecision(10, 2);
