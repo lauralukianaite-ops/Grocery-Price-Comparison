@@ -18,6 +18,8 @@ public class GoogleDistanceProvider : IDistanceProvider
     // takes user's location, gives the amount of km by road to each of the locations (takes one near location per store chain)
     public async Task<List<double?>> RoadDistanceKmAsync(double userLatitude, double userLongitude, List<StoreLocation> destinations)
     {
+        if (destinations.Count == 0) return new List<double?>();
+        
         var url = "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
 
         var request = new
