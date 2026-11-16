@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLocationStore } from "../../location";
+import { getStores } from "../api/catalogApi"
 import {
   buildCatalogSearchParams,
   parseCatalogSearchParams,
@@ -10,6 +11,7 @@ import { useProducts } from "./useProducts";
 
 export const CATALOG_PAGE_SIZE = 12;
 export const CATALOG_SORT_OPTIONS = Object.freeze([
+  { value: "discount-high", label: "Discount: highest first" },
   { value: "price-low", label: "Price: low to high" },
   { value: "price-high", label: "Price: high to low" },
   { value: "name", label: "Product name" },
@@ -18,17 +20,19 @@ export const CATALOG_SORT_OPTIONS = Object.freeze([
 export function useCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { page, query, sort } = parseCatalogSearchParams(searchParams);
+  const [stores, setStores] = useState([]);
   const currentLocation = useLocationStore((state) => state.currentLocation);
   const { items, totalCount, isLoading, error, retry } = useProducts({
     page,
     pageSize: CATALOG_PAGE_SIZE,
     query,
+    store,
     sort,
     latitude: currentLocation?.latitude,
     longitude: currentLocation?.longitude,
   });
   const isUsingSeededProducts =
-    !isLoading && (Boolean(error) || items.length === 0);
+    !isLoading && (Boolean(error) || (!store && !query && items.length === 0));
   const visibleItems = isUsingSeededProducts
     ? getSeededProducts({ query, sort })
     : items;
@@ -40,16 +44,29 @@ export function useCatalogPage() {
     : Math.max(1, Math.ceil(totalCount / CATALOG_PAGE_SIZE));
 
   useEffect(() => {
+    const controller = new AbortController();
+    getStores(controller.signal)
+      .then((loadedStores) => setStores(loadedStores))
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setStores([]);
+        }
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
     const canonicalSearchParams = buildCatalogSearchParams(searchParams, {
       page,
       query,
+      store,
       sort,
     });
 
     if (canonicalSearchParams.toString() !== searchParams.toString()) {
       setSearchParams(canonicalSearchParams, { replace: true });
     }
-  }, [page, query, searchParams, setSearchParams, sort]);
+  }, [page, query, searchParams, setSearchParams, sort, store]);
 
   useEffect(() => {
     if (!isLoading && page > pageCount) {
@@ -91,10 +108,16 @@ export function useCatalogPage() {
     document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function updateStore(nextStore) {
+    updateCatalogState({ store: nextStore, page: 1 });
+  }
+
   return {
     page,
     pageCount,
     query,
+    store,
+    stores,
     sort,
     items: visibleItems,
     totalCount: visibleTotalCount,
@@ -103,6 +126,7 @@ export function useCatalogPage() {
     retry,
     updateQuery,
     updateSort,
+    updateStore,
     changePage,
   };
 }
