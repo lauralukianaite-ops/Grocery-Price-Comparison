@@ -1,6 +1,7 @@
 using backend.DTOs;
 using backend.Entities;
 using backend.Enums;
+using backend.Exceptions;
 using backend.Repositories;
 using backend.Services.Interfaces;
 
@@ -74,7 +75,7 @@ public class BasketService : IBasketService
                 var distances = await _distanceProvider.RoadDistanceKmAsync(request.Latitude.Value, request.Longitude.Value, shops);
                 baskets = AddTravel(nearBaskets, shops, distances, request.CostPerKm ?? DefaultCostPerKm, request.MaxKm ?? DefaultMaxKm);
             }
-            catch (HttpRequestException)
+            catch (DistanceUnavailableException)
             {
                 return new BasketResult(BasketOutcome.DistanceUnavailable, null);
             }
