@@ -8,6 +8,7 @@ public interface IItemsRepository
         int page,
         int pageSize,
         string? query,
+        string? store,
         string sort,
         List<int>? itemIds = null);
     Task<List<Item>> GetItemsWithPriceAndStoreAsync();
@@ -15,4 +16,5 @@ public interface IItemsRepository
     Task<List<Price>> GetPriceWithStoreByItemIdAsync(int itemId);
     Task<List<Item>> GetItemsAsync();
     Task<List<Price>> GetNewestPricesWithStoreAndItemSinceAsync(DateTime since, List<int>? bannedIds = null);
+    Task<List<Store>> GetStoresAsync();
 }
