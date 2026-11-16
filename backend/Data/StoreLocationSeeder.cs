@@ -14,7 +14,9 @@ public static class StoreLocationSeeder
         ("Ekomarket", "EkoMarket"), ("Mon ami", "Mon Ami"), ("Alkava", "ALKAVÀ"),
         ("Vyno klubas", "Vyno klubas"), ("Vyno kambarys", "Vyno kambarys"),
         ("Šerno pėda", "Šerno Pėda"), ("Steak Supply", "Steak Supply"),
-        ("Tarandės", "Tarandės žuvų rūkykla")
+        ("Tarandės", "Tarandės žuvų rūkykla"),
+        ("Naturalia", "Naturalia Ūkis"), ("The Farm", "The Farm"), ("Prike", "Prike"),
+        ("Jūratės Gulbinienės", "Jūratės Gulbinienės tortai"), ("Genys", "Genys"), ("Multi Cook", "Multi Cook")
     };
     
     public static async Task SeedAsync(AppDbContext context)

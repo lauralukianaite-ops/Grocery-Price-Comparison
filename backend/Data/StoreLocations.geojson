@@ -15720,6 +15720,261 @@
           54.6798602
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "9",
+        "addr:street": "Saltoniškių g.",
+        "name": "Naturalia Ūkis",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2577801,
+          54.700394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "25",
+        "addr:street": "Ozo g.",
+        "name": "Naturalia Ūkis",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2619873,
+          54.7108839
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Kaunas",
+        "addr:housenumber": "49",
+        "addr:street": "Karaliaus Mindaugo pr.",
+        "name": "Naturalia Ūkis",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.919353,
+          54.89077
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "31",
+        "addr:street": "Verkių g.",
+        "name": "The Farm",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2949245,
+          54.7143543
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "26",
+        "addr:street": "Konstitucijos pr.",
+        "name": "Prike",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2667711,
+          54.69742
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "31A",
+        "addr:street": "Verkių g.",
+        "name": "Jūratės Gulbinienės tortai",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2956323,
+          54.7143194
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "125",
+        "addr:street": "Laisvės pr.",
+        "name": "Jūratės Gulbinienės tortai",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2364397,
+          54.7281622
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Kaunas",
+        "addr:housenumber": "11",
+        "addr:street": "Alaušo g.",
+        "name": "Jūratės Gulbinienės tortai",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.970683,
+          54.9230463
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Kaunas",
+        "addr:housenumber": "139",
+        "addr:street": "Veiverių g.",
+        "name": "Jūratės Gulbinienės tortai",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.8884662,
+          54.8651904
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Kaunas",
+        "addr:housenumber": "7H",
+        "addr:street": "A. Juozapavičiaus pr.",
+        "name": "Genys",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.9496408,
+          54.8648023
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "55",
+        "addr:street": "Pavilnionių g.",
+        "name": "Multi Cook",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2108973,
+          54.736903
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "8",
+        "addr:street": "Vytauto Pociūno g.",
+        "name": "Multi Cook",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2066339,
+          54.7037896
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "29B",
+        "addr:street": "Verkių g.",
+        "name": "Multi Cook",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2970268,
+          54.7128667
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Vilnius",
+        "addr:housenumber": "2",
+        "addr:street": "Sausio 13-osios g.",
+        "name": "Multi Cook",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.2211017,
+          54.6937525
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "addr:city": "Kaunas",
+        "addr:housenumber": "16",
+        "addr:street": "Pramonės pr.",
+        "name": "Multi Cook",
+        "source": "manual"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.9965845,
+          54.916272
+        ]
+      }
     }
   ]
 }
