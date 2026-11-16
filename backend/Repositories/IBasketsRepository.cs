@@ -6,4 +6,5 @@ public interface IBasketsRepository
 {
     Task SaveAsync(Basket basket);
     Task<Basket?> GetByIdAsync(Guid id);
+    Task<List<StoreLocation>> GetAllLocationsAsync();
 }

@@ -28,11 +28,11 @@ else
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddTransient<IScraper, LastMileScraper>();
 builder.Services.AddTransient<IScraper, RimiScraper>();
 builder.Services.AddTransient<IScraper, BarboraScraper>();
 builder.Services.AddTransient<IFileReader, DiskFileReader>();
 builder.Services.AddTransient<IStoreConfigLoader, StoreConfigLoader>();
-builder.Services.AddTransient<IScraper, LastMileScraper>();
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();

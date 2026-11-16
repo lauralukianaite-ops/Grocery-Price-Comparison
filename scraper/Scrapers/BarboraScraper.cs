@@ -91,8 +91,10 @@ public class BarboraScraper : IScraper
         // 2. takes jsonText
         var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
 
-        // 3. scrapes item information
-        return json.EnumerateArray().Select(p => new Item
+        // 3. scrapes item information only when it is in stock (the status is "active")
+        return json.EnumerateArray()
+            .Where(p => p.GetProperty("status").GetString() == "active")
+            .Select(p => new Item
         {
             Name = p.GetProperty("title").GetString()!,
             Prices = new List<Price>

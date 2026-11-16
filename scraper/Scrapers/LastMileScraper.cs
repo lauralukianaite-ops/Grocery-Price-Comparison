@@ -129,12 +129,12 @@ public class LastMileScraper : IScraper
         return productsProp.EnumerateArray().Select(p =>
         {
             var fp = p.GetProperty("frontEndProduct");
-            var costPrice = fp.GetProperty("costPrice");
+            var prc = fp.GetProperty("prc");
 
             // cost without discounts
-            decimal regularPrice = costPrice.GetProperty("p").GetDecimal();
+            decimal regularPrice = prc.GetProperty("p").GetDecimal();
             // cost with the highest discount
-            decimal? promoPrice = costPrice.GetNullableDecimal("l");
+            decimal? promoPrice = prc.GetNullableDecimal("l") ?? prc.GetNullableDecimal("s");
 
             // 3. creates the item
             return new Item

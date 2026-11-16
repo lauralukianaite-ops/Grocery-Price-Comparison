@@ -23,6 +23,7 @@
 }
 
 :root {
+  --page-content-width: 90rem;
   --background: #fff;
   --foreground: #171717;
   --card: #fff;
