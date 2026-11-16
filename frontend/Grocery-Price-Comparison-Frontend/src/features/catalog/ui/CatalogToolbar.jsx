@@ -11,10 +11,13 @@ import { CATALOG_SORT_OPTIONS } from "../model/useCatalogPage";
 
 export default function CatalogToolbar({
   query,
+  store,
+  stores = [],
   sort,
   isLoading,
   isUsingSeededProducts,
   onQueryChange,
+  onStoreChange,
   onSortChange,
 }) {
   return (
@@ -24,7 +27,7 @@ export default function CatalogToolbar({
           ? "Sample prices are shown while the catalog API is unavailable."
           : "Prices and availability come directly from the catalog API."}
       </p>
-      <div className="flex min-w-0 flex-1 gap-2 sm:max-w-xl sm:justify-end">
+      <div className="flex min-w-0 flex-1 gap-2 sm:max-w-2xl sm:justify-end">
         <label className="relative min-w-0 flex-1 sm:max-w-xs">
           <span className="sr-only">Search all products</span>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -37,6 +40,24 @@ export default function CatalogToolbar({
             aria-busy={isLoading}
           />
         </label>
+
+        <Select
+          value={store || "all"}
+          onValueChange={(value) => onStoreChange(value === "all" ? "" : value)}
+        >
+          <SelectTrigger className="h-9 w-[11rem] bg-background">
+            <SelectValue>{store || "All stores"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="all">All stores</SelectItem>
+            {stores.map((storeOption) => (
+              <SelectItem key={storeOption.id} value={storeOption.name}>
+                {storeOption.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={sort} onValueChange={onSortChange}>
           <SelectTrigger className="h-9 w-[11.5rem] bg-background">
             <SelectValue>
