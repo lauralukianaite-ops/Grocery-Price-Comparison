@@ -12,6 +12,8 @@ public class Worker(ILogger<Worker> logger,
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var scrapeFailed = false;
+
         // goes through all scrapers
         foreach (var scraper in scrapers)
         {
@@ -80,17 +82,26 @@ public class Worker(ILogger<Worker> logger,
             }
             catch (OperationCanceledException)
             {
+                scrapeFailed = true;
                 logger.LogInformation("Scraping cancelled!.");
                 break;
             }
             catch (UnauthorizedAccessException ex)
             {
+                scrapeFailed = true;
                 logger.LogError(ex, "Scraper's urls could not be read, {Store}", scraper.StoreName);
             }
             catch (Exception ex)
             {
+                scrapeFailed = true;
                 logger.LogError(ex, "Error collecting data from, {Store}", scraper.StoreName);
             }
+        }
+
+        if (scrapeFailed)
+        {
+            Environment.ExitCode = 1;
+            logger.LogError("One or more stores failed; scraper is exiting with code 1.");
         }
 
         hostApplicationLifetime.StopApplication();
