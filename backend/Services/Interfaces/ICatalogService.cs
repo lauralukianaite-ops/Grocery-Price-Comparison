@@ -1,4 +1,5 @@
 using backend.DTOs;
+using backend.Entities;
 
 namespace backend.Services.Interfaces;
 
@@ -11,5 +12,7 @@ public interface ICatalogService
         string? store,
         string? sort,
         string? ids);
+
+    Task <List<Store>> GetStoresAsync();
 }
 

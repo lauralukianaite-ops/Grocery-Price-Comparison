@@ -1,6 +1,7 @@
 using backend.DTOs;
 using backend.Repositories;
 using backend.Services.Interfaces;
+using backend.Entities;
 
 namespace backend.Services;
 
@@ -63,6 +64,11 @@ public class CatalogService : ICatalogService
             .OfType<int>()
             .Distinct()
             .ToList();
+    }
+
+    public async Task<List<Store>> GetStoresAsync()
+    {
+        return await _itemsRepository.GetStoresAsync();
     }
 }
 

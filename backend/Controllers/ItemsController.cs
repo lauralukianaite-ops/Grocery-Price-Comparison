@@ -32,7 +32,7 @@ public class ItemsController : ControllerBase
         [FromQuery] int pageSize = 12,
         [FromQuery] string? query = null,
         [FromQuery] string? store = null,
-        [FromQuery] string sort = "price-low",
+        [FromQuery] string sort = "discount-high",
         [FromQuery] string? ids = null)
     {
         var catalog = await _catalogService.GetCatalogAsync(page, pageSize, query, store, sort, ids);
@@ -62,6 +62,13 @@ public class ItemsController : ControllerBase
         var check = await _fakeDiscountService.GetDiscountFlag(itemId);
         if (check is null) return NotFound();
         return Ok(check);
+    }
+
+    [HttpGet("stores")]
+    public async Task<IActionResult> GetStores()
+    {
+        var stores = await _catalogService.GetStoresAsync();
+        return Ok(stores.Select(s => new {s.Id, s.Name}));
     }
 
     [HttpPost("refresh-index")]
