@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using backend.Entities;
+using backend.Exceptions;
 using backend.Services.Interfaces;
 
 namespace backend.Services;
@@ -33,21 +34,28 @@ public class GoogleDistanceProvider : IDistanceProvider
                 .ToList(),
             travelMode = "DRIVE"
         };
-        
-        var response = await _httpClient.PostAsJsonAsync(url, request); // google's answer
-        response.EnsureSuccessStatusCode(); // throw if error
-        var json = await response.Content.ReadAsStringAsync(); // answer as text
-        using var doc = JsonDocument.Parse(json); // text to json
-        var elements = doc.RootElement.EnumerateArray(); // one per destination
 
-        return elements // give list of km, in same order.
-            .Select(element => (
-                Index: element.GetProperty("destinationIndex").GetInt32(),
-                Km: element.TryGetProperty("distanceMeters", out var meters)
-                    ? meters.GetDouble() / 1000
-                    : (double?)null))
-            .OrderBy(pair => pair.Index)
-            .Select(pair => pair.Km)
-            .ToList(); 
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(url, request); // google's answer
+            response.EnsureSuccessStatusCode(); // throw if error
+            var json = await response.Content.ReadAsStringAsync(); // answer as text
+            using var doc = JsonDocument.Parse(json); // text to json
+            var elements = doc.RootElement.EnumerateArray(); // one per destination
+
+            return elements // give list of km, in same order.
+                .Select(element => (
+                    Index: element.GetProperty("destinationIndex").GetInt32(),
+                    Km: element.TryGetProperty("distanceMeters", out var meters)
+                        ? meters.GetDouble() / 1000
+                        : (double?)null))
+                .OrderBy(pair => pair.Index)
+                .Select(pair => pair.Km)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            throw new DistanceUnavailableException("Google did not return road distances", ex);
+        }
     }
 }
