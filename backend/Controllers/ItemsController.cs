@@ -31,10 +31,11 @@ public class ItemsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 12,
         [FromQuery] string? query = null,
+        [FromQuery] string? store = null,
         [FromQuery] string sort = "price-low",
         [FromQuery] string? ids = null)
     {
-        var catalog = await _catalogService.GetCatalogAsync(page, pageSize, query, sort, ids);
+        var catalog = await _catalogService.GetCatalogAsync(page, pageSize, query, store, sort, ids);
         return Ok(catalog);
     }
 
