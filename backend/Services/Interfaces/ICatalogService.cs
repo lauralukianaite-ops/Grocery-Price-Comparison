@@ -8,6 +8,7 @@ public interface ICatalogService
         int page,
         int pageSize,
         string? query,
+        string? store,
         string? sort,
         string? ids);
 }

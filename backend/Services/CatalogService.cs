@@ -17,17 +17,19 @@ public class CatalogService : ICatalogService
         int page,
         int pageSize,
         string? query,
+        string? store,
         string? sort,
         string? ids)
     {
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 100);
-        sort = sort is "price-high" or "name" ? sort : "price-low";
+        sort = sort is "price-low" or "price-high" or "name" or "discount-high" ? sort : "discount-high";
 
         var (items, totalCount) = await _itemsRepository.GetItemsPageAsync(
             page,
             pageSize,
             query,
+            store,
             sort,
             ParseItemIds(ids));
 
