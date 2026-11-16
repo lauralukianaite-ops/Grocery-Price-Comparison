@@ -17,6 +17,7 @@ public class ItemsRepository : IItemsRepository
         int page,
         int pageSize,
         string? query,
+        string? store,
         string sort,
         List<int>? itemIds = null)
     {
@@ -31,13 +32,34 @@ public class ItemsRepository : IItemsRepository
             itemsQuery = itemsQuery.Where(item => item.Name.ToLower().Contains(searchTerm));
         }
 
-        var items = await itemsQuery
-            .Include(item => item.Prices)
-            .ThenInclude(price => price.Store)
-            .ToListAsync();
+        IQueryable<Item> itemsWithIncludes;
+        if (!string.IsNullOrWhiteSpace(store))
+        {
+            var storeFilter = store.Trim().ToLower();
+            itemsQuery = itemsQuery.Where(item =>
+                item.Prices.Any(p => p.Store != null && p.Store.Name.ToLower() == storeFilter));
+
+            itemsWithIncludes = itemsQuery
+                .Include(item => item.Prices.Where(p => p.Store != null && p.Store.Name.ToLower() == storeFilter))
+                .ThenInclude(price => price.Store);
+        }
+        else
+        {
+            itemsWithIncludes = itemsQuery
+                .Include(item => item.Prices)
+                .ThenInclude(price => price.Store);
+        }
+
+        var items = await itemsWithIncludes.ToListAsync();
 
         var sortedItems = sort switch
         {
+            "discount-high" => items
+                .OrderByDescending(GetBestCurrentDiscountPercentage)
+                .ThenBy(item => GetBestCurrentPrice(item) is null)
+                .ThenBy(GetBestCurrentPrice)
+                .ThenBy(item => item.Name)
+                .ThenBy(item => item.Id),
             "price-high" => items.OrderBy(item => GetBestCurrentPrice(item) is null)
                 .ThenByDescending(GetBestCurrentPrice).ThenBy(item => item.Name).ThenBy(item => item.Id),
             "name" => items.OrderBy(item => item.Name).ThenBy(item => item.Id),
@@ -46,6 +68,25 @@ public class ItemsRepository : IItemsRepository
         };
 
         return (sortedItems.Skip((page - 1) * pageSize).Take(pageSize).ToList(), items.Count);
+    }
+
+    private static decimal GetBestCurrentDiscountPercentage(Item item)
+    {
+        var latestOffers = item.Prices
+            .GroupBy(price => price.StoreId)
+            .Select(group => group.OrderByDescending(price => price.RecordedAt).First());
+        
+        decimal maxDiscount = 0m;
+        foreach (var offer in latestOffers)
+        {
+            if(offer.RetailCost is > 0 && offer.RetailCost > offer.Cost)
+            {
+                var discount = (offer.RetailCost.Value - offer.Cost) / offer.RetailCost.Value;
+                if(discount > maxDiscount)
+                    maxDiscount = discount;
+            }
+        }
+        return maxDiscount;
     }
 
     private static decimal? GetBestCurrentPrice(Item item)
@@ -99,5 +140,13 @@ public class ItemsRepository : IItemsRepository
             .GroupBy(p => new { p.ItemId, p.StoreId })
             .Select(g => g.OrderByDescending(p => p.RecordedAt).First())
             .ToList();
+    }
+
+    public async Task<List<Store>> GetStoresAsync()
+    {
+        return await _context.Stores
+            .AsNoTracking()
+            .OrderBy(s => s.Name)
+            .ToListAsync();
     }
 }
