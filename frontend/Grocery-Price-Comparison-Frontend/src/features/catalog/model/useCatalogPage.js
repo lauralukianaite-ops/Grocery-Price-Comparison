@@ -1,26 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLocationStore } from "../../location";
-import { getStores } from "../api/catalogApi"
 import {
   buildCatalogSearchParams,
   parseCatalogSearchParams,
 } from "../catalogSearchParams";
+import { CATALOG_PAGE_SIZE } from "../catalogConstants";
 import { getSeededProducts } from "../seededProducts";
 import { useProducts } from "./useProducts";
-
-export const CATALOG_PAGE_SIZE = 12;
-export const CATALOG_SORT_OPTIONS = Object.freeze([
-  { value: "discount-high", label: "Discount: highest first" },
-  { value: "price-low", label: "Price: low to high" },
-  { value: "price-high", label: "Price: high to low" },
-  { value: "name", label: "Product name" },
-]);
+import { useStores } from "./useStores";
 
 export function useCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { page, query, store, sort } = parseCatalogSearchParams(searchParams);
-  const [stores, setStores] = useState([]);
+  const stores = useStores();
   const currentLocation = useLocationStore((state) => state.currentLocation);
   const { items, totalCount, isLoading, error, retry } = useProducts({
     page,
@@ -31,8 +24,11 @@ export function useCatalogPage() {
     latitude: currentLocation?.latitude,
     longitude: currentLocation?.longitude,
   });
+
   const isUsingSeededProducts =
-    !isLoading && (Boolean(error) || (!store && !query && items.length === 0));
+    import.meta.env.DEV &&
+    !isLoading &&
+    (Boolean(error) || (!store && !query && items.length === 0));
   const visibleItems = isUsingSeededProducts
     ? getSeededProducts({ query, sort })
     : items;
@@ -42,18 +38,6 @@ export function useCatalogPage() {
   const pageCount = isUsingSeededProducts
     ? 1
     : Math.max(1, Math.ceil(totalCount / CATALOG_PAGE_SIZE));
-
-  useEffect(() => {
-    const controller = new AbortController();
-    getStores(controller.signal)
-      .then((loadedStores) => setStores(loadedStores))
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          setStores([]);
-        }
-      });
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     const canonicalSearchParams = buildCatalogSearchParams(searchParams, {
@@ -93,23 +77,19 @@ export function useCatalogPage() {
   }
 
   function updateQuery(nextQuery) {
-    updateCatalogState(
-      { query: nextQuery, page: 1 },
-      { replace: true },
-    );
+    updateCatalogState({ query: nextQuery, page: 1 }, { replace: true });
   }
 
   function updateSort(nextSort) {
     updateCatalogState({ sort: nextSort, page: 1 });
   }
 
-  function changePage(nextPage) {
-    updateCatalogState({ page: Math.min(Math.max(nextPage, 1), pageCount) });
-    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
-  }
-
   function updateStore(nextStore) {
     updateCatalogState({ store: nextStore, page: 1 });
+  }
+
+  function changePage(nextPage) {
+    updateCatalogState({ page: Math.min(Math.max(nextPage, 1), pageCount) });
   }
 
   return {
@@ -122,6 +102,7 @@ export function useCatalogPage() {
     items: visibleItems,
     totalCount: visibleTotalCount,
     isLoading,
+    error,
     isUsingSeededProducts,
     retry,
     updateQuery,

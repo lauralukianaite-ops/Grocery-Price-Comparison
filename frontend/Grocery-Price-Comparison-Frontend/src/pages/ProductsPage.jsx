@@ -11,6 +11,11 @@ import { LocationPreference } from "../features/location";
 export default function ProductsPage() {
   const catalog = useCatalogPage();
 
+  function handlePageChange(nextPage) {
+    catalog.changePage(nextPage);
+    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <main
       id="main-content"
@@ -54,7 +59,7 @@ export default function ProductsPage() {
           <CatalogPagination
             page={catalog.page}
             pageCount={catalog.pageCount}
-            onPageChange={catalog.changePage}
+            onPageChange={handlePageChange}
           />
         )}
       </section>
