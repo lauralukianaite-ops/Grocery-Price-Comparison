@@ -1,6 +1,7 @@
 ﻿using backend.Repositories;
 using backend.Services;
 using backend.Services.Interfaces;
+using backend.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -35,8 +36,15 @@ public class ItemsController : ControllerBase
         [FromQuery] string sort = "discount-high",
         [FromQuery] string? ids = null)
     {
-        var catalog = await _catalogService.GetCatalogAsync(page, pageSize, query, store, sort, ids);
-        return Ok(catalog);
+        var catalogQuery = new CatalogQuery(
+            page,
+            pageSize,
+            query,
+            store,
+            CatalogRequestParser.ParseSort(sort),
+            CatalogRequestParser.ParseItemIds(ids));
+
+        return Ok(await _catalogService.GetCatalogAsync(catalogQuery));
     }
 
     [HttpGet("{itemId:int}/price-history")]

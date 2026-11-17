@@ -1,5 +1,7 @@
 using backend.Data;
 using backend.Entities;
+using backend.ValueObjects;
+using backend.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Repositories;
@@ -13,29 +15,23 @@ public class ItemsRepository : IItemsRepository
         _context = context;
     }
 
-    public async Task<(List<Item> Items, int TotalCount)> GetItemsPageAsync(
-        int page,
-        int pageSize,
-        string? query,
-        string? store,
-        string sort,
-        List<int>? itemIds = null)
+    public async Task<CatalogPageResult> GetCatalogPageAsync(CatalogQuery query)
     {
         var itemsQuery = _context.Items.AsNoTracking();
 
-        if (itemIds is not null)
-            itemsQuery = itemsQuery.Where(item => itemIds.Contains(item.Id));
+        if (query.ItemIds is not null)
+            itemsQuery = itemsQuery.Where(item => query.ItemIds.Contains(item.Id));
 
-        if (!string.IsNullOrWhiteSpace(query))
+        if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var searchTerm = query.Trim().ToLower();
+            var searchTerm = query.Search.Trim().ToLower();
             itemsQuery = itemsQuery.Where(item => item.Name.ToLower().Contains(searchTerm));
         }
 
         IQueryable<Item> itemsWithIncludes;
-        if (!string.IsNullOrWhiteSpace(store))
+        if (!string.IsNullOrWhiteSpace(query.Store))
         {
-            var storeFilter = store.Trim().ToLower();
+            var storeFilter = query.Store.Trim().ToLower();
             itemsQuery = itemsQuery.Where(item =>
                 item.Prices.Any(p => p.Store != null && p.Store.Name.ToLower() == storeFilter));
 
@@ -52,22 +48,23 @@ public class ItemsRepository : IItemsRepository
 
         var items = await itemsWithIncludes.ToListAsync();
 
-        var sortedItems = sort switch
+        var sortedItems = query.Sort switch
         {
-            "discount-high" => items
+            CatalogSort.DiscountHigh => items
                 .OrderByDescending(GetBestCurrentDiscountPercentage)
                 .ThenBy(item => GetBestCurrentPrice(item) is null)
                 .ThenBy(GetBestCurrentPrice)
                 .ThenBy(item => item.Name)
                 .ThenBy(item => item.Id),
-            "price-high" => items.OrderBy(item => GetBestCurrentPrice(item) is null)
+            CatalogSort.PriceHigh => items.OrderBy(item => GetBestCurrentPrice(item) is null)
                 .ThenByDescending(GetBestCurrentPrice).ThenBy(item => item.Name).ThenBy(item => item.Id),
-            "name" => items.OrderBy(item => item.Name).ThenBy(item => item.Id),
+            CatalogSort.Name => items.OrderBy(item => item.Name).ThenBy(item => item.Id),
             _ => items.OrderBy(item => GetBestCurrentPrice(item) is null)
                 .ThenBy(GetBestCurrentPrice).ThenBy(item => item.Name).ThenBy(item => item.Id)
         };
 
-        return (sortedItems.Skip((page - 1) * pageSize).Take(pageSize).ToList(), items.Count);
+        var page = sortedItems.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
+        return new CatalogPageResult(page, items.Count);
     }
 
     private static decimal GetBestCurrentDiscountPercentage(Item item)
