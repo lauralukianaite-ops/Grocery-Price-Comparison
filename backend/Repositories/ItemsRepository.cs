@@ -98,33 +98,6 @@ public class ItemsRepository : IItemsRepository
         return new CatalogPageResult(pageItems, totalCount);
     }
 
-    private static decimal GetBestCurrentDiscountPercentage(Item item)
-    {
-        var latestOffers = item.Prices
-            .GroupBy(price => price.StoreId)
-            .Select(group => group.OrderByDescending(price => price.RecordedAt).First());
-        
-        decimal maxDiscount = 0m;
-        foreach (var offer in latestOffers)
-        {
-            if(offer.RetailCost is > 0 && offer.RetailCost > offer.Cost)
-            {
-                var discount = (offer.RetailCost.Value - offer.Cost) / offer.RetailCost.Value;
-                if(discount > maxDiscount)
-                    maxDiscount = discount;
-            }
-        }
-        return maxDiscount;
-    }
-
-    private static decimal? GetBestCurrentPrice(Item item)
-    {
-        return item.Prices
-            .GroupBy(price => price.StoreId)
-            .Select(group => (decimal?)group.OrderByDescending(price => price.RecordedAt).First().Cost)
-            .Min();
-    }
-
     public async Task<List<Item>> GetItemsWithPriceAndStoreAsync()
     {
         return await _context.Items
