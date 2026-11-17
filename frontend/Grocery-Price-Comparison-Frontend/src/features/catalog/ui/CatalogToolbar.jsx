@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { CATALOG_SORT_OPTIONS } from "../model/useCatalogPage";
+import { CATALOG_SORT_OPTIONS } from "../catalogConstants";
 
 export default function CatalogToolbar({
   query,
