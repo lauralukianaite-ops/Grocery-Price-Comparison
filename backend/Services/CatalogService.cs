@@ -2,7 +2,6 @@ using backend.DTOs;
 using backend.Repositories;
 using backend.ValueObjects;
 using backend.Services.Interfaces;
-using backend.Entities;
 
 namespace backend.Services;
 

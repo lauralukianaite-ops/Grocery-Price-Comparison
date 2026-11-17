@@ -7,6 +7,6 @@ public interface ICatalogService
 {
     Task<CatalogResponseDto> GetCatalogAsync(CatalogQuery query);
 
-    Task <List<StoreDto>> GetStoresAsync();
+    Task<List<StoreDto>> GetStoresAsync();
 }
 

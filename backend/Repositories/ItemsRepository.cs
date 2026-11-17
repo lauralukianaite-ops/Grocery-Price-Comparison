@@ -84,7 +84,6 @@ public class ItemsRepository : IItemsRepository
             .Select(x => x.Item)
             .ToListAsync();
 
-    
         var pageIds = pageItems.Select(i => i.Id).ToList();
         var offers = await latestPrices
             .Where(p => pageIds.Contains(p.ItemId))
