@@ -15,12 +15,26 @@ export default function CatalogResults({
   hasSearchOrFilters,
   isLoading,
   isUsingSeededProducts,
+  error,
   onRetry,
   onClearSearchAndFilters,
   renderProductActions,
 }) {
   if (isLoading) {
     return <ProductGridSkeleton />;
+  }
+
+  if (error && !isUsingSeededProducts) {
+    return (
+      <Alert className="py-4">
+        <PackageSearch aria-hidden="true" />
+        <AlertTitle>Could not load products</AlertTitle>
+        <AlertDescription>Please try again to load current store prices.</AlertDescription>
+        <AlertAction>
+          <Button size="sm" variant="outline" onClick={onRetry}>Retry</Button>
+        </AlertAction>
+      </Alert>
+    );
   }
 
   return (

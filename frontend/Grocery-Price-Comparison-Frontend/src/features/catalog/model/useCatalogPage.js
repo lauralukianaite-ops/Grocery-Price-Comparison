@@ -16,7 +16,7 @@ export function useCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const catalogState = parseCatalogSearchParams(searchParams);
   const { page, sort, store, storeIds, minPrice, maxPrice, discountedOnly } = catalogState;
-  const stores = useStores();
+  const storeRequest = useStores();
   const currentLocation = useLocationStore((state) => state.currentLocation);
   const { items, totalCount, isLoading, error, retry } = useProducts({
     ...catalogState,
@@ -28,7 +28,7 @@ export function useCatalogPage() {
   // Sample products remain a development-only fallback for failed requests.
   const canUseSeededProducts = import.meta.env.DEV && Boolean(error);
   const isUsingSeededProducts = !isLoading && canUseSeededProducts;
-  const availableStores = canUseSeededProducts ? getSeededStores() : stores;
+  const availableStores = canUseSeededProducts ? getSeededStores() : storeRequest.stores;
   const visibleItems = isUsingSeededProducts ? getSeededProducts(catalogState) : items;
   const visibleTotalCount = isUsingSeededProducts ? visibleItems.length : totalCount;
   const pageCount = isUsingSeededProducts
@@ -99,18 +99,26 @@ export function useCatalogPage() {
     updateCatalogState({ page: Math.min(Math.max(nextPage, 1), pageCount) });
   }
 
+  function retryCatalog() {
+    retry();
+    if (storeRequest.error) storeRequest.retry();
+  }
+
   return {
     ...catalogState,
     pageCount,
     availableStores,
     selectedStoreIds,
+    isLoadingStores: storeRequest.isLoading && availableStores.length === 0,
+    storesError: canUseSeededProducts ? "" : storeRequest.error,
+    retryStores: storeRequest.retry,
     hasActiveFilters: Boolean(store || storeIds || minPrice || maxPrice || discountedOnly),
     items: visibleItems,
     totalCount: visibleTotalCount,
     isLoading,
     error,
     isUsingSeededProducts,
-    retry,
+    retry: retryCatalog,
     updateQuery,
     updateSort,
     updateFilters,

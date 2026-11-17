@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { Button } from "../../../components/ui/button";
+import { Skeleton } from "../../../components/ui/skeleton";
 import { cn } from "../../../lib/utils";
 import { parseSelectedStores } from "../catalogSearchParams";
 import CatalogPriceRangeFilter from "./CatalogPriceRangeFilter";
@@ -8,6 +9,9 @@ import CatalogPriceRangeFilter from "./CatalogPriceRangeFilter";
 export default function CatalogFilters({
   stores,
   selectedStores,
+  isLoadingStores,
+  storesError,
+  onRetryStores,
   minPrice,
   maxPrice,
   discountedOnly,
@@ -71,12 +75,13 @@ export default function CatalogFilters({
         id={filterFieldsId}
         className={cn("border-t border-border lg:block", !isExpanded && "hidden")}
       >
-        <fieldset className="p-5">
+        <fieldset className="p-5" aria-busy={isLoadingStores}>
           <legend className="float-left mb-3 w-full text-sm font-medium">Stores</legend>
           <p className="clear-both mb-4 text-xs leading-relaxed text-muted-foreground">
             Compare prices at any of the selected stores.
           </p>
           <div className="max-h-64 space-y-3 overflow-y-auto">
+            {isLoadingStores && <StoreListSkeleton />}
             {stores.map((store) => (
               <label key={store.id} className="flex cursor-pointer items-center gap-3 text-sm">
                 <input
@@ -88,12 +93,17 @@ export default function CatalogFilters({
                 <span>{store.name}</span>
               </label>
             ))}
-            {stores.length === 0 && (
+            {!isLoadingStores && stores.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                No stores available yet.
+                {storesError ? "Could not load stores." : "No stores available yet."}
               </p>
             )}
           </div>
+          {!isLoadingStores && storesError && (
+            <Button className="mt-3" size="sm" variant="outline" onClick={onRetryStores}>
+              Retry stores
+            </Button>
+          )}
           {stores.length > 0 && selectedStoreIds.length === 0 && (
             <p className="mt-4 text-xs text-muted-foreground">All stores included</p>
           )}
@@ -121,5 +131,21 @@ export default function CatalogFilters({
         </div>
       </div>
     </aside>
+  );
+}
+
+function StoreListSkeleton() {
+  return (
+    <div role="status">
+      <span className="sr-only">Loading stores…</span>
+      <div className="space-y-3" aria-hidden="true">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div key={index} className="flex h-5 items-center gap-3">
+            <Skeleton className="size-4 shrink-0 rounded-sm" />
+            <Skeleton className="h-4 w-28" />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

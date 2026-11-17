@@ -33,6 +33,9 @@ export default function ProductsPage() {
           <CatalogFilters
             stores={catalog.availableStores}
             selectedStores={catalog.selectedStoreIds}
+            isLoadingStores={catalog.isLoadingStores}
+            storesError={catalog.storesError}
+            onRetryStores={catalog.retryStores}
             minPrice={catalog.minPrice}
             maxPrice={catalog.maxPrice}
             discountedOnly={catalog.discountedOnly}
@@ -54,6 +57,7 @@ export default function ProductsPage() {
               hasSearchOrFilters={Boolean(catalog.query) || catalog.hasActiveFilters}
               isLoading={catalog.isLoading}
               isUsingSeededProducts={catalog.isUsingSeededProducts}
+              error={catalog.error}
               onRetry={catalog.retry}
               onClearSearchAndFilters={catalog.clearSearchAndFilters}
               renderProductActions={(product) => <BasketProductControls product={product} />}
