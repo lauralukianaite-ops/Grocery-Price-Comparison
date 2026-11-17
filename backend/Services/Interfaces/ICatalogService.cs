@@ -1,14 +1,12 @@
 using backend.DTOs;
+using backend.ValueObjects;
 
 namespace backend.Services.Interfaces;
 
 public interface ICatalogService
 {
-    Task<CatalogResponseDto> GetCatalogAsync(
-        int page,
-        int pageSize,
-        string? query,
-        string? sort,
-        string? ids);
+    Task<CatalogResponseDto> GetCatalogAsync(CatalogQuery query);
+
+    Task<List<StoreDto>> GetStoresAsync();
 }
 

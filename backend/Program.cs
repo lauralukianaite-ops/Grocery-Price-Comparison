@@ -33,6 +33,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddSingleton<IItemSimilarityIndex, ItemSimilarityIndex>();
 builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
 builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
+builder.Services.AddScoped<IStoresRepository, StoresRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();

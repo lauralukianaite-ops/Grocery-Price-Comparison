@@ -42,7 +42,7 @@ public class BasketIntegrationTests
             itemsRepository,
             basketsRepository,
             new FakeDiscountService(itemsRepository),
-            new ItemSimilarityService(new ItemSimilarityIndex()),
+            new ItemSimilarityService(new ItemSimilarityIndex(), itemsRepository),
             _distances);
         _controller = new BasketsController(service);
     }
