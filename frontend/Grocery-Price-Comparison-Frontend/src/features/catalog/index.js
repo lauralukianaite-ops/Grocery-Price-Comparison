@@ -1,4 +1,5 @@
 export { default as CatalogHeader } from "./ui/CatalogHeader";
+export { default as CatalogFilters } from "./ui/CatalogFilters";
 export { default as CatalogPagination } from "./ui/CatalogPagination";
 export { default as CatalogResults } from "./ui/CatalogResults";
 export { default as CatalogToolbar } from "./ui/CatalogToolbar";

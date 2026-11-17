@@ -13,6 +13,10 @@ export function useProducts({
   pageSize,
   query,
   store,
+  storeIds,
+  minPrice,
+  maxPrice,
+  discountedOnly,
   sort,
   latitude,
   longitude,
@@ -34,7 +38,7 @@ export function useProducts({
 
       try {
         const nextCatalog = await getCatalog(
-          { page, pageSize, query, store, sort, latitude, longitude },
+          { page, pageSize, query, store, storeIds, minPrice, maxPrice, discountedOnly, sort, latitude, longitude },
           controller.signal,
         );
         setCatalog(nextCatalog);
@@ -54,7 +58,7 @@ export function useProducts({
       clearTimeout(requestDelay);
       controller.abort();
     };
-  }, [latitude, longitude, page, pageSize, query, requestVersion, sort, store]);
+  }, [latitude, longitude, page, pageSize, query, requestVersion, sort, store, storeIds, minPrice, maxPrice, discountedOnly]);
 
   return { ...catalog, isLoading, error, retry };
 }
