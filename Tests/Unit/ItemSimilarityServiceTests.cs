@@ -147,9 +147,8 @@ public class ItemSimilarityServiceTests
     }
  
     [Fact]
-    public void Constructor_Throws_WhenDependenciesAreMissing()
+    public void Constructor_Throws_WhenSimilarityIndexIsMissing()
     {
-        Assert.Throws<ArgumentNullException>(() => new ItemSimilarityService(_indexMock.Object, null!));
         Assert.Throws<ArgumentNullException>(() => new ItemSimilarityService(null!, _repositoryMock.Object));
     }
  

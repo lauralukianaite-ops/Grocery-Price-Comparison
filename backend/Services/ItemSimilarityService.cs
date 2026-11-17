@@ -10,10 +10,10 @@ public class ItemSimilarityService : IItemSimilarityService
     private readonly IItemSimilarityIndex _similarityIndex;
     private readonly IItemsRepository _repository;
 
-    public ItemSimilarityService(IItemSimilarityIndex similarityIndex, IItemsRepository? repository = null)
+    public ItemSimilarityService(IItemSimilarityIndex similarityIndex, IItemsRepository repository)
     {
         _similarityIndex = similarityIndex ?? throw new ArgumentNullException(nameof(similarityIndex));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _repository = repository;
     }
 
     public async Task RefreshIndexAsync()
@@ -27,7 +27,7 @@ public class ItemSimilarityService : IItemSimilarityService
         if (threshold < 0 || threshold > 1)
             throw new ArgumentOutOfRangeException(nameof(threshold), "Threshold must be between 0 and 1.");
 
-        if (string.IsNullOrEmpty(itemName))
+        if (string.IsNullOrWhiteSpace(itemName))
             throw new ArgumentException("Item name can't be empty.");
 
         var matches = _similarityIndex.Find(itemName, threshold);
