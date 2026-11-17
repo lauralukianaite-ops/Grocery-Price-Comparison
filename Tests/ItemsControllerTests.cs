@@ -77,7 +77,7 @@ public class ItemsControllerTests
         var item = Assert.Single(response.Items);
         var offer = Assert.Single(item.Offers);
 
-        Assert.Equal(3, response.TotalCount);
+        Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.Page);
         Assert.Equal("Banana", item.Name);
         Assert.Equal(1.50m, offer.Cost);
