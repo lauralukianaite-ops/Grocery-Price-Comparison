@@ -42,7 +42,7 @@ public async Task GetSimilarItemsAsync_MeasuresRealDbAndAlgorithmTime()
     index.BuildOrUpdateIndex(itemsFromDb);
     indexSw.Stop();
 
-    var service = new ItemSimilarityService(index);
+    var service = new ItemSimilarityService(index, repository);
 
     var searchSw = Stopwatch.StartNew();
     var response = await service.GetSimilarItemsAsync("Pienas", 0.3);

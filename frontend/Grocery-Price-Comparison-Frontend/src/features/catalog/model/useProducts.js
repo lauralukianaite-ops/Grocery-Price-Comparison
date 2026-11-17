@@ -12,6 +12,7 @@ export function useProducts({
   page,
   pageSize,
   query,
+  store,
   sort,
   latitude,
   longitude,
@@ -33,7 +34,7 @@ export function useProducts({
 
       try {
         const nextCatalog = await getCatalog(
-          { page, pageSize, query, sort, latitude, longitude },
+          { page, pageSize, query, store, sort, latitude, longitude },
           controller.signal,
         );
         setCatalog(nextCatalog);
@@ -53,7 +54,7 @@ export function useProducts({
       clearTimeout(requestDelay);
       controller.abort();
     };
-  }, [latitude, longitude, page, pageSize, query, requestVersion, sort]);
+  }, [latitude, longitude, page, pageSize, query, requestVersion, sort, store]);
 
   return { ...catalog, isLoading, error, retry };
 }

@@ -1,16 +1,18 @@
 export const DEFAULT_CATALOG_STATE = Object.freeze({
   page: 1,
   query: "",
-  sort: "price-low",
+  store: "",
+  sort: "discount-high",
 });
 
 const CATALOG_PARAM_NAMES = Object.freeze({
   page: "page",
   query: "q",
+  store: "store",
   sort: "sort",
 });
 
-const SUPPORTED_SORTS = new Set(["price-low", "price-high", "name"]);
+const SUPPORTED_SORTS = new Set(["discount-high", "price-low", "price-high", "name"]);
 
 function parsePage(value) {
   const page = Number(value);
@@ -25,6 +27,7 @@ export function parseCatalogSearchParams(searchParams) {
   return {
     page: parsePage(searchParams.get(CATALOG_PARAM_NAMES.page)),
     query: searchParams.get(CATALOG_PARAM_NAMES.query) ?? "",
+    store: searchParams.get(CATALOG_PARAM_NAMES.store) ?? "",
     sort: SUPPORTED_SORTS.has(requestedSort)
       ? requestedSort
       : DEFAULT_CATALOG_STATE.sort,
@@ -34,6 +37,13 @@ export function parseCatalogSearchParams(searchParams) {
 export function buildCatalogSearchParams(currentSearchParams, catalogState) {
   const nextSearchParams = new URLSearchParams(currentSearchParams);
   const query = catalogState.query.trim();
+
+  const store = (catalogState.store ?? "").trim();
+  if (store) {
+    nextSearchParams.set(CATALOG_PARAM_NAMES.store, store);
+  } else {
+    nextSearchParams.delete(CATALOG_PARAM_NAMES.store);
+  }
 
   if (query) {
     nextSearchParams.set(CATALOG_PARAM_NAMES.query, query);

@@ -7,14 +7,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { CATALOG_SORT_OPTIONS } from "../model/useCatalogPage";
+import { CATALOG_SORT_OPTIONS } from "../catalogConstants";
 
 export default function CatalogToolbar({
   query,
+  store,
+  stores = [],
   sort,
   isLoading,
   isUsingSeededProducts,
   onQueryChange,
+  onStoreChange,
   onSortChange,
 }) {
   return (
@@ -33,8 +36,26 @@ export default function CatalogToolbar({
             aria-busy={isLoading}
           />
         </label>
+
+        <Select
+          value={store || "all"}
+          onValueChange={(value) => onStoreChange(value === "all" ? "" : value)}
+        >
+          <SelectTrigger className="h-9 w-[11rem] bg-background">
+            <SelectValue>{store || "All stores"}</SelectValue>
+          </SelectTrigger>
+          <SelectContent align="end">
+            <SelectItem value="all">All stores</SelectItem>
+            {stores.map((storeOption) => (
+              <SelectItem key={storeOption.id} value={storeOption.name}>
+                {storeOption.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={sort} onValueChange={onSortChange}>
-          <SelectTrigger className="h-9 w-[11.5rem] bg-background">
+          <SelectTrigger className="h-9 w-[13.5rem] bg-background">
             <SelectValue>
               {
                 CATALOG_SORT_OPTIONS.find((option) => option.value === sort)
