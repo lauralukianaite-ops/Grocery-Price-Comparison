@@ -59,7 +59,7 @@ export default function CatalogToolbar({
         </Select>
 
         <Select value={sort} onValueChange={onSortChange}>
-          <SelectTrigger className="h-9 w-[11.5rem] bg-background">
+          <SelectTrigger className="h-9 w-[13.5rem] bg-background">
             <SelectValue>
               {CATALOG_SORT_OPTIONS.find((option) => option.value === sort)?.label}
             </SelectValue>
