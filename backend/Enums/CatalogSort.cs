@@ -5,5 +5,7 @@ public enum CatalogSort
     DiscountHigh,
     PriceLow,
     PriceHigh,
-    Name
+    Name,
+    NameDescending,
+    DiscountLow
 }
