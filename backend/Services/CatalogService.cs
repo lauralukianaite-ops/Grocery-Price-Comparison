@@ -31,9 +31,7 @@ public class CatalogService : ICatalogService
             item.Id,
             item.Name,
             item.Prices
-            .Where(price => price.Store is not null)
-                .GroupBy(price => price.StoreId)
-                .Select(group => group.OrderByDescending(price => price.RecordedAt).First())
+                .Where(price => price.Store is not null)
                 .OrderBy(price => price.Store!.Name)
                 .Select(price => new CatalogOfferDto(
                     price.StoreId,

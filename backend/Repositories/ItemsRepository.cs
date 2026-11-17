@@ -17,54 +17,85 @@ public class ItemsRepository : IItemsRepository
 
     public async Task<CatalogPageResult> GetCatalogPageAsync(CatalogQuery query)
     {
-        var itemsQuery = _context.Items.AsNoTracking();
+        var storeFilter = string.IsNullOrWhiteSpace(query.Store)
+            ? null
+            : query.Store.Trim().ToLower();
+
+        var latestPrices = _context.Prices.AsNoTracking()
+            .Where(p => !_context.Prices.Any(n =>
+                n.ItemId == p.ItemId &&
+                n.StoreId == p.StoreId &&
+                (n.RecordedAt > p.RecordedAt ||
+                 (n.RecordedAt == p.RecordedAt && n.Id > p.Id))));
+
+        if (storeFilter is not null)
+            latestPrices = latestPrices.Where(p => p.Store!.Name.ToLower() == storeFilter);
+
+        var perItem = latestPrices
+            .GroupBy(p => p.ItemId)
+            .Select(g => new
+            {
+                ItemId = g.Key,
+                BestPrice = g.Min(p => p.Cost),
+                BestDiscount = g.Max(p =>
+                    p.RetailCost != null && p.RetailCost > 0 && p.RetailCost > p.Cost
+                        ? (p.RetailCost.Value - p.Cost) / p.RetailCost.Value
+                        : 0m)
+            });
+
+        var itemsQuery = _context.Items.AsNoTracking().AsQueryable();
 
         if (query.ItemIds is not null)
-            itemsQuery = itemsQuery.Where(item => query.ItemIds.Contains(item.Id));
+            itemsQuery = itemsQuery.Where(i => query.ItemIds.Contains(i.Id));
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var searchTerm = query.Search.Trim().ToLower();
-            itemsQuery = itemsQuery.Where(item => item.Name.ToLower().Contains(searchTerm));
+            var term = query.Search.Trim().ToLower();
+            itemsQuery = itemsQuery.Where(i => i.Name.ToLower().Contains(term));
         }
 
-        IQueryable<Item> itemsWithIncludes;
-        if (!string.IsNullOrWhiteSpace(query.Store))
-        {
-            var storeFilter = query.Store.Trim().ToLower();
-            itemsQuery = itemsQuery.Where(item =>
-                item.Prices.Any(p => p.Store != null && p.Store.Name.ToLower() == storeFilter));
+        var joined = itemsQuery.Join(
+            perItem,
+            item => item.Id,
+            stats => stats.ItemId,
+            (item, stats) => new
+            {
+                Item = item,
+                stats.BestPrice,
+                stats.BestDiscount
+            });
 
-            itemsWithIncludes = itemsQuery
-                .Include(item => item.Prices.Where(p => p.Store != null && p.Store.Name.ToLower() == storeFilter))
-                .ThenInclude(price => price.Store);
-        }
-        else
+        var sorted = query.Sort switch
         {
-            itemsWithIncludes = itemsQuery
-                .Include(item => item.Prices)
-                .ThenInclude(price => price.Store);
-        }
-
-        var items = await itemsWithIncludes.ToListAsync();
-
-        var sortedItems = query.Sort switch
-        {
-            CatalogSort.DiscountHigh => items
-                .OrderByDescending(GetBestCurrentDiscountPercentage)
-                .ThenBy(item => GetBestCurrentPrice(item) is null)
-                .ThenBy(GetBestCurrentPrice)
-                .ThenBy(item => item.Name)
-                .ThenBy(item => item.Id),
-            CatalogSort.PriceHigh => items.OrderBy(item => GetBestCurrentPrice(item) is null)
-                .ThenByDescending(GetBestCurrentPrice).ThenBy(item => item.Name).ThenBy(item => item.Id),
-            CatalogSort.Name => items.OrderBy(item => item.Name).ThenBy(item => item.Id),
-            _ => items.OrderBy(item => GetBestCurrentPrice(item) is null)
-                .ThenBy(GetBestCurrentPrice).ThenBy(item => item.Name).ThenBy(item => item.Id)
+            CatalogSort.PriceLow => joined.OrderBy(x => x.BestPrice)
+            .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+            CatalogSort.PriceHigh => joined.OrderByDescending(x => x.BestPrice)
+                .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+            CatalogSort.Name => joined.OrderBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+            _ => joined.OrderByDescending(x => x.BestDiscount).ThenBy(x => x.BestPrice)
+                .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id)
         };
 
-        var page = sortedItems.Skip((query.Page - 1) * query.PageSize).Take(query.PageSize).ToList();
-        return new CatalogPageResult(page, items.Count);
+        var totalCount = await sorted.CountAsync();
+
+        var pageItems = await sorted
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(x => x.Item)
+            .ToListAsync();
+
+    
+        var pageIds = pageItems.Select(i => i.Id).ToList();
+        var offers = await latestPrices
+            .Where(p => pageIds.Contains(p.ItemId))
+            .Include(p => p.Store)
+            .ToListAsync();
+
+        var offersByItem = offers.ToLookup(p => p.ItemId);
+        foreach (var item in pageItems)
+            item.Prices = offersByItem[item.Id].ToList();
+
+        return new CatalogPageResult(pageItems, totalCount);
     }
 
     private static decimal GetBestCurrentDiscountPercentage(Item item)
