@@ -28,10 +28,13 @@ export default function ProductsPage() {
       <section id="products" className="mt-8" aria-label="Product catalog">
         <CatalogToolbar
           query={catalog.query}
+          store={catalog.store}
+          stores={catalog.stores}
           sort={catalog.sort}
           isLoading={catalog.isLoading}
           isUsingSeededProducts={catalog.isUsingSeededProducts}
           onQueryChange={catalog.updateQuery}
+          onStoreChange={catalog.updateStore}
           onSortChange={catalog.updateSort}
         />
 

@@ -27,7 +27,7 @@ export function parseCatalogSearchParams(searchParams) {
   return {
     page: parsePage(searchParams.get(CATALOG_PARAM_NAMES.page)),
     query: searchParams.get(CATALOG_PARAM_NAMES.query) ?? "",
-    store: searchParams.get(CATALOG_PARAM_NAME.store) ?? "",
+    store: searchParams.get(CATALOG_PARAM_NAMES.store) ?? "",
     sort: SUPPORTED_SORTS.has(requestedSort)
       ? requestedSort
       : DEFAULT_CATALOG_STATE.sort,

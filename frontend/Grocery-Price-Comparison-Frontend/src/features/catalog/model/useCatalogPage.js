@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useLocationStore } from "../../location";
 import { getStores } from "../api/catalogApi"
@@ -19,7 +19,7 @@ export const CATALOG_SORT_OPTIONS = Object.freeze([
 
 export function useCatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { page, query, sort } = parseCatalogSearchParams(searchParams);
+  const { page, query, store, sort } = parseCatalogSearchParams(searchParams);
   const [stores, setStores] = useState([]);
   const currentLocation = useLocationStore((state) => state.currentLocation);
   const { items, totalCount, isLoading, error, retry } = useProducts({
