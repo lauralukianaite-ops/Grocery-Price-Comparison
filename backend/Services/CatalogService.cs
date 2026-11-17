@@ -9,10 +9,12 @@ namespace backend.Services;
 public class CatalogService : ICatalogService
 {
     private readonly IItemsRepository _itemsRepository;
+    private readonly IStoresRepository _storesRepository;
 
-    public CatalogService(IItemsRepository itemsRepository)
+    public CatalogService(IItemsRepository itemsRepository, IStoresRepository storesRepository)
     {
         _itemsRepository = itemsRepository;
+        _storesRepository = storesRepository;
     }
 
     public async Task<CatalogResponseDto> GetCatalogAsync(CatalogQuery query)
@@ -45,9 +47,10 @@ public class CatalogService : ICatalogService
         return new CatalogResponseDto(catalogItems, result.TotalCount, normalized.Page, normalized.PageSize);
     }
 
-    public async Task<List<Store>> GetStoresAsync()
+    public async Task<List<StoreDto>> GetStoresAsync()
     {
-        return await _itemsRepository.GetStoresAsync();
+        var stores = await _storesRepository.GetAllAsync();
+        return stores.Select(s => new StoreDto(s.Id, s.Name)).ToList();
     }
 }
 

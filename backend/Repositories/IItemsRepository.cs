@@ -11,5 +11,4 @@ public interface IItemsRepository
     Task<List<Price>> GetPriceWithStoreByItemIdAsync(int itemId);
     Task<List<Item>> GetItemsAsync();
     Task<List<Price>> GetNewestPricesWithStoreAndItemSinceAsync(DateTime since, List<int>? bannedIds = null);
-    Task<List<Store>> GetStoresAsync();
 }

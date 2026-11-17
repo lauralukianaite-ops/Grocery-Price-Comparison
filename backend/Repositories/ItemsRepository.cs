@@ -138,12 +138,4 @@ public class ItemsRepository : IItemsRepository
             .Select(g => g.OrderByDescending(p => p.RecordedAt).First())
             .ToList();
     }
-
-    public async Task<List<Store>> GetStoresAsync()
-    {
-        return await _context.Stores
-            .AsNoTracking()
-            .OrderBy(s => s.Name)
-            .ToListAsync();
-    }
 }

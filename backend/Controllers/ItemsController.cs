@@ -73,11 +73,8 @@ public class ItemsController : ControllerBase
     }
 
     [HttpGet("stores")]
-    public async Task<IActionResult> GetStores()
-    {
-        var stores = await _catalogService.GetStoresAsync();
-        return Ok(stores.Select(s => new {s.Id, s.Name}));
-    }
+    public async Task<IActionResult> GetStores() =>
+        Ok(await _catalogService.GetStoresAsync());
 
     [HttpPost("refresh-index")]
     public async Task<IActionResult> RefreshIndex()
