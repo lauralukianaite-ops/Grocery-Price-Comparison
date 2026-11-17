@@ -37,7 +37,6 @@ export default function ProductsPage() {
           stores={catalog.stores}
           sort={catalog.sort}
           isLoading={catalog.isLoading}
-          isUsingSeededProducts={catalog.isUsingSeededProducts}
           onQueryChange={catalog.updateQuery}
           onStoreChange={catalog.updateStore}
           onSortChange={catalog.updateSort}

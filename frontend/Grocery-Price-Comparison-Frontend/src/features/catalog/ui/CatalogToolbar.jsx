@@ -15,18 +15,12 @@ export default function CatalogToolbar({
   stores = [],
   sort,
   isLoading,
-  isUsingSeededProducts,
   onQueryChange,
   onStoreChange,
   onSortChange,
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="hidden text-sm text-muted-foreground sm:block">
-        {isUsingSeededProducts
-          ? "Sample prices are shown while the catalog API is unavailable."
-          : "Prices and availability come directly from the catalog API."}
-      </p>
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
       <div className="flex min-w-0 flex-1 gap-2 sm:max-w-2xl sm:justify-end">
         <label className="relative min-w-0 flex-1 sm:max-w-xs">
           <span className="sr-only">Search all products</span>
@@ -61,7 +55,10 @@ export default function CatalogToolbar({
         <Select value={sort} onValueChange={onSortChange}>
           <SelectTrigger className="h-9 w-[13.5rem] bg-background">
             <SelectValue>
-              {CATALOG_SORT_OPTIONS.find((option) => option.value === sort)?.label}
+              {
+                CATALOG_SORT_OPTIONS.find((option) => option.value === sort)
+                  ?.label
+              }
             </SelectValue>
           </SelectTrigger>
           <SelectContent align="end">
