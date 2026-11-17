@@ -1,0 +1,45 @@
+name: Scrape grocery prices
+
+on:
+  schedule:
+    - cron: "0 3,15 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: grocery-scraper
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore scraper/scraper.csproj
+
+      - name: Build
+        run: dotnet build scraper/scraper.csproj --configuration Release --no-restore
+
+      - name: Install Playwright Chromium
+        run: pwsh scraper/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Install virtual display
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run scraper once
+        run: xvfb-run -a dotnet run --configuration Release --no-build
+        working-directory: scraper
+        env:
+          GlobalSettings__DatabaseHost: ${{ secrets.DB_HOST }}
+          GlobalSettings__DatabasePort: ${{ secrets.DB_PORT }}
+          GlobalSettings__DatabaseName: ${{ secrets.DB_NAME }}
+          GlobalSettings__DatabaseUser: ${{ secrets.DB_USER }}
+          GlobalSettings__DatabasePassword: ${{ secrets.DB_PASSWORD }}

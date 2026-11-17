@@ -59,12 +59,18 @@ function getResponseItems(response) {
   return Array.isArray(response) ? response : (response?.items ?? []);
 }
 
+export async function getStores(signal) {
+  const response = await get("/items/stores", { signal });
+  return Array.isArray(response) ? response : [];
+}
+
 export async function getCatalog(
   {
     page = 1,
     pageSize = 12,
     query = "",
-    sort = "price-low",
+    store = "",
+    sort = "discount-high",
     latitude,
     longitude,
   },
@@ -78,6 +84,10 @@ export async function getCatalog(
 
   if (query.trim()) {
     searchParams.set("query", query.trim());
+  }
+
+  if (store.trim()) {
+    searchParams.set("store", store.trim());
   }
 
   if (Number.isFinite(latitude) && Number.isFinite(longitude)) {

@@ -11,6 +11,11 @@ import { LocationPreference } from "../features/location";
 export default function ProductsPage() {
   const catalog = useCatalogPage();
 
+  function handlePageChange(nextPage) {
+    catalog.changePage(nextPage);
+    document.getElementById("products")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <main
       id="main-content"
@@ -28,10 +33,12 @@ export default function ProductsPage() {
       <section id="products" className="mt-8" aria-label="Product catalog">
         <CatalogToolbar
           query={catalog.query}
+          store={catalog.store}
+          stores={catalog.stores}
           sort={catalog.sort}
           isLoading={catalog.isLoading}
-          isUsingSeededProducts={catalog.isUsingSeededProducts}
           onQueryChange={catalog.updateQuery}
+          onStoreChange={catalog.updateStore}
           onSortChange={catalog.updateSort}
         />
 
@@ -51,7 +58,7 @@ export default function ProductsPage() {
           <CatalogPagination
             page={catalog.page}
             pageCount={catalog.pageCount}
-            onPageChange={catalog.changePage}
+            onPageChange={handlePageChange}
           />
         )}
       </section>

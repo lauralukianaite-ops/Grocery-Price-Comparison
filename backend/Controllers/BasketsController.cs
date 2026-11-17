@@ -1,4 +1,6 @@
 using backend.DTOs;
+using backend.Enums;
+using backend.Services;
 using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,10 +23,15 @@ public class BasketsController : ControllerBase
         var problems = await _basketService.FindProblemsAsync(request);
         if (problems.Count > 0) return BadRequest(problems);
 
-        var basket = await _basketService.CreateAsync(request);
-        if (basket is null) return UnprocessableEntity("No store has all these items. Try a broader search or a smaller basket.");
+        var result = await _basketService.CreateAsync(request);
+        if (result.Outcome == BasketOutcome.NoCompleteBasket)
+            return UnprocessableEntity("No store has all these items. Try a broader search or a smaller basket.");
+        if (result.Outcome == BasketOutcome.NoStoreInRange)
+            return UnprocessableEntity($"No store with all these items is within {request.MaxKm ?? BasketService.DefaultMaxKm} km.");
+        if (result.Outcome == BasketOutcome.DistanceUnavailable)
+            return StatusCode(503, "Travel distance unavailable.");
 
-        return Ok(basket);
+        return Ok(result.Basket);
     }
 
     [HttpGet("{id:guid}")]

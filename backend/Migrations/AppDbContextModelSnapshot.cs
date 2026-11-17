@@ -52,6 +52,17 @@ namespace backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<double?>("DistanceKm")
+                        .HasColumnType("double precision");
+
+                    b.Property<decimal>("GroceriesTotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("LocationAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<int>("StoreId")
                         .HasColumnType("integer");
 
@@ -63,7 +74,7 @@ namespace backend.Migrations
                     b.Property<int>("Strictness")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Total")
+                    b.Property<decimal>("TravelCost")
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 

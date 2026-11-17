@@ -33,6 +33,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddSingleton<IItemSimilarityIndex, ItemSimilarityIndex>();
 builder.Services.AddScoped<IItemsRepository, ItemsRepository>();
 builder.Services.AddScoped<IBasketsRepository, BasketsRepository>();
+builder.Services.AddScoped<IStoresRepository, StoresRepository>();
 builder.Services.AddScoped<IItemPriceHistoryService, ItemPriceHistoryService>();
 builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
@@ -51,6 +52,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi();
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddHttpClient<IDistanceProvider, GoogleDistanceProvider>();
 
 var app = builder.Build();
 
@@ -58,6 +60,8 @@ using (var scope = app.Services.CreateScope())
 {
     var repo = scope.ServiceProvider.GetRequiredService<IItemsRepository>();
     var index = scope.ServiceProvider.GetRequiredService<IItemSimilarityIndex>();
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await StoreLocationSeeder.SeedAsync(context);
 
     var items = await repo.GetItemsWithPriceAndStoreAsync();
     index.BuildOrUpdateIndex(items);
@@ -71,5 +75,4 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors(FrontendCors);
 app.MapControllers();
-
 app.Run();

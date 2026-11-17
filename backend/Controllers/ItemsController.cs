@@ -1,6 +1,7 @@
-﻿using backend.Services;
+﻿using backend.Repositories;
+using backend.Services;
 using backend.Services.Interfaces;
-using backend.Repositories;
+using backend.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -31,11 +32,19 @@ public class ItemsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 12,
         [FromQuery] string? query = null,
-        [FromQuery] string sort = "price-low",
+        [FromQuery] string? store = null,
+        [FromQuery] string sort = "discount-high",
         [FromQuery] string? ids = null)
     {
-        var catalog = await _catalogService.GetCatalogAsync(page, pageSize, query, sort, ids);
-        return Ok(catalog);
+        var catalogQuery = new CatalogQuery(
+            page,
+            pageSize,
+            query,
+            store,
+            CatalogRequestParser.ParseSort(sort),
+            CatalogRequestParser.ParseItemIds(ids));
+
+        return Ok(await _catalogService.GetCatalogAsync(catalogQuery));
     }
 
     [HttpGet("{itemId:int}/price-history")]
@@ -63,18 +72,14 @@ public class ItemsController : ControllerBase
         return Ok(check);
     }
 
-    [HttpPost("refresh-index")]
-    public async Task<IActionResult> RefreshIndex(
-        [FromServices] IItemsRepository repository,
-        [FromServices] IItemSimilarityIndex index)
-    {
-        var items = await repository.GetItemsWithPriceAndStoreAsync();
-        index.BuildOrUpdateIndex(items);
+    [HttpGet("stores")]
+    public async Task<IActionResult> GetStores() =>
+        Ok(await _catalogService.GetStoresAsync());
 
-        return Ok(new 
-        { 
-            message = "Index successfully renewed from database.", 
-            itemCount = items.Count 
-        });
+    [HttpPost("refresh-index")]
+    public async Task<IActionResult> RefreshIndex()
+    {
+        await _similarityService.RefreshIndexAsync();
+        return NoContent();
     }
 }
