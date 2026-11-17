@@ -67,8 +67,11 @@ public class ItemsControllerTests
             });
         await context.SaveChangesAsync();
 
-        var repository = new ItemsRepository(context);
-        var controller = new ItemsController(null!, null!, null!, new CatalogService(repository,null));
+        var catalogService = new CatalogService(
+            new ItemsRepository(context),
+            new StoresRepository(context));
+
+        var controller = new ItemsController(null!, null!, null!, catalogService);
 
         var actionResult = await controller.GetItems(page: 2, pageSize: 1, sort: "price-high");
 
