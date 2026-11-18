@@ -30,7 +30,6 @@ public class Worker(ILogger<Worker> logger,
                 int count = 0;
                 await foreach (var scrapedItem in scraper.ScrapeProductsAsync(stoppingToken))
                 {
-                    logger.LogInformation("Scraping {Store}...", scraper.StoreName);
                     count++;
 
                     // 2. takes active store from scraper

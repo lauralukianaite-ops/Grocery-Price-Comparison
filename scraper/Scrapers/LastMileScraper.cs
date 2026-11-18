@@ -8,16 +8,19 @@ namespace scraper;
 public class LastMileScraper : IScraper
 {
     private readonly IStoreConfigLoader _configLoader;
-    private readonly String _configFilePath;
+    private readonly ILogger<LastMileScraper> _logger;
+    private readonly string _configFilePath;
 
     public string StoreName { get; private set;} = string.Empty;
     private Dictionary<string, List<string>> AllStores = new();
 
     // constructor opens and reads all of the "LastMileStores.json" provided store information
-    public LastMileScraper(IStoreConfigLoader configLoader, 
+    public LastMileScraper(IStoreConfigLoader configLoader,
+                            ILogger<LastMileScraper> logger,
                             string configFilePath = "Data/LastMileStores.json")
     {
         _configLoader = configLoader;
+        _logger = logger;
         _configFilePath = configFilePath;
     }
 
@@ -46,13 +49,36 @@ public class LastMileScraper : IScraper
 
             foreach(string url in urls)
             {
-                // 2. before openning the url, says that "frontend-products" is expected
-                var responseTask = page.WaitForResponseAsync(r => r.Url.Contains("frontend-products") && r.Status == 200);
-                await page.GotoAsync(url);
+                // 2. before opening the url, wait for the products response
+                var responseTask = page.WaitForResponseAsync(r => r.Url.Contains("frontend-products"));
+                try
+                {
+                    await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                }
+                catch (TimeoutException ex)
+                {
+                    _logger.LogWarning(ex, "Timed out navigating to {Url}; moving to the next category", url);
+                    continue;
+                }
                 
                 // 3. scrapes starting page items
-                var response = await responseTask;
-                if (response == null) continue;
+                IResponse response;
+                try
+                {
+                    response = await responseTask;
+                }
+                catch (TimeoutException ex)
+                {
+                    _logger.LogWarning(ex, "Timed out waiting for products from {Url}; moving to the next category", url);
+                    continue;
+                }
+
+                if (response.Status != 200)
+                {
+                    _logger.LogWarning("Products request for {Url} returned HTTP {Status}; moving to the next category", url, response.Status);
+                    continue;
+                }
+
                 foreach (var item in await ExtractItemsAsync(response))
                 {
                     yield return item;
@@ -86,13 +112,37 @@ public class LastMileScraper : IScraper
                     }
 
                     // 5. before pressing the button, says that "frontend-products" is expected
-                    var nextResponseTask = page.WaitForResponseAsync(r => r.Url.Contains("frontend-products") && r.Status == 200);
+                    var nextResponseTask = page.WaitForResponseAsync(r => r.Url.Contains("frontend-products"));
 
                     // 6. presses the button
-                    await loadMoreButton.ClickAsync();
+                    try
+                    {
+                        await loadMoreButton.ClickAsync();
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        _logger.LogWarning(ex, "Timed out clicking load more for {Url}; moving to the next category", url);
+                        break;
+                    }
 
                     // 7. waits for the response and scrapes it
-                    var nextResponse = await nextResponseTask;
+                    IResponse nextResponse;
+                    try
+                    {
+                        nextResponse = await nextResponseTask;
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        _logger.LogWarning(ex, "Timed out loading more products from {Url}; moving to the next category", url);
+                        break;
+                    }
+
+                    if (nextResponse.Status != 200)
+                    {
+                        _logger.LogWarning("Loading more products from {Url} returned HTTP {Status}; moving to the next category", url, nextResponse.Status);
+                        break;
+                    }
+
                     var newItems = await ExtractItemsAsync(nextResponse);
 
                     // 8. breaks if no products were found
@@ -106,9 +156,9 @@ public class LastMileScraper : IScraper
                         yield return item;
                     }
 
-                    await page.WaitForTimeoutAsync(rand.Next(1000, 2000));
+                    await Task.Delay(rand.Next(500, 1000), cancellationToken);
                 }
-                await page.WaitForTimeoutAsync(rand.Next(1000, 2000));
+                await Task.Delay(rand.Next(300, 700), cancellationToken);
             }
         }
     }

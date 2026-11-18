@@ -8,16 +8,19 @@ namespace scraper;
 public class RimiScraper : IScraper
 {
     private readonly IStoreConfigLoader _configLoader;
-    private readonly String _configFilePath;
+    private readonly ILogger<RimiScraper> _logger;
+    private readonly string _configFilePath;
 
     public string StoreName { get; private set;} = string.Empty;
     private Dictionary<string, List<string>> AllStores = new();
 
     // constructor opens and reads all of the "RimiStores.json" provided store information
-    public RimiScraper(IStoreConfigLoader configLoader, 
+    public RimiScraper(IStoreConfigLoader configLoader,
+                            ILogger<RimiScraper> logger,
                             string configFilePath = "Data/RimiStores.json")
     {
         _configLoader = configLoader;
+        _logger = logger;
         _configFilePath = configFilePath;
     }
 
@@ -51,8 +54,30 @@ public class RimiScraper : IScraper
                 while (true)
                 {
                     // 1. opens site and takes HTML answer
-                    var response = await page.GotoAsync($"{url}?currentPage={pageUrl}&pageSize=80");
-                    if (response == null) continue;
+                    IResponse? response;
+                    try
+                    {
+                        response = await page.GotoAsync(
+                            $"{url}?currentPage={pageUrl}&pageSize=80",
+                            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        _logger.LogWarning(ex, "Timed out navigating to Rimi page {Page} at {Url}; moving to the next category", pageUrl, url);
+                        break;
+                    }
+
+                    if (response == null)
+                    {
+                        _logger.LogWarning("No response received for Rimi page {Page} at {Url}; moving to the next category", pageUrl, url);
+                        break;
+                    }
+
+                    if (response.Status != 200)
+                    {
+                        _logger.LogWarning("Rimi page {Page} at {Url} returned HTTP {Status}; moving to the next category", pageUrl, url, response.Status);
+                        break;
+                    }
 
                     var items = await ExtractItemsAsync(response);
                     if (items.Count == 0)break;
@@ -64,7 +89,7 @@ public class RimiScraper : IScraper
                     }
                     
                     pageUrl++;
-                    await Task.Delay(rand.Next(2000, 3500), cancellationToken);
+                    await Task.Delay(rand.Next(500, 1000), cancellationToken);
                 }
             }
         }
