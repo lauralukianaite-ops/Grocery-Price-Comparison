@@ -5,7 +5,7 @@ namespace backend.Services.Interfaces;
 
 public interface ICatalogService
 {
-    Task<CatalogResponseDto> GetCatalogAsync(CatalogQuery query);
+    Task<PagedResponse<CatalogItemDto>> GetCatalogAsync(CatalogQuery query);
 
     Task<List<StoreDto>> GetStoresAsync();
 }

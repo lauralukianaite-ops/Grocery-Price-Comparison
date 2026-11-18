@@ -99,7 +99,7 @@ public class ItemsControllerTests
         var actionResult = await controller.GetItems(page: 2, pageSize: 1, sort: "price-high");
 
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
-        var response = Assert.IsType<CatalogResponseDto>(okResult.Value);
+        var response = Assert.IsType<PagedResponse<CatalogItemDto>>(okResult.Value);
         var item = Assert.Single(response.Items);
         var offer = Assert.Single(item.Offers);
 

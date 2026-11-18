@@ -27,7 +27,7 @@ public class CatalogServiceTests
     public async Task GetCatalogAsync_ClampsPageAndPageSizeBeforeCallingRepository()
     {
         _items.Setup(r => r.GetCatalogPageAsync(It.IsAny<CatalogQuery>()))
-              .ReturnsAsync(new CatalogPageResult(new List<Item>(), 0));
+              .ReturnsAsync(new PageResult<Item>(new List<Item>(), 0));
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(0, 1000, null, null, CatalogSort.Name, null));
@@ -53,7 +53,7 @@ public class CatalogServiceTests
             ]
         };
         _items.Setup(r => r.GetCatalogPageAsync(It.IsAny<CatalogQuery>()))
-              .ReturnsAsync(new CatalogPageResult([item], 1));
+              .ReturnsAsync(new PageResult<Item>([item], 1));
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(1, 12, null, null, CatalogSort.Name, null));

@@ -5,7 +5,7 @@ namespace backend.Repositories;
 
 public interface IItemsRepository
 {
-    Task<CatalogPageResult> GetCatalogPageAsync(CatalogQuery query);
+    Task<PageResult<Item>> GetCatalogPageAsync(CatalogQuery query);
     Task<List<Item>> GetItemsWithPriceAndStoreAsync();
     Task<bool> ExistsAsync(int itemId);
     Task<List<Price>> GetPriceWithStoreByItemIdAsync(int itemId);
