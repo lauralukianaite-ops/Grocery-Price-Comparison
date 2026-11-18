@@ -52,7 +52,7 @@ export function parseCatalogSearchParams(searchParams) {
 export function buildCatalogSearchParams(currentSearchParams, catalogState) {
   const nextSearchParams = new URLSearchParams(currentSearchParams);
   const parameters = {
-    q: catalogState.query.trim(),
+    q: catalogState.query,
     store: catalogState.store.trim(),
     stores: catalogState.storeIds,
     sort: catalogState.sort === DEFAULT_CATALOG_STATE.sort ? "" : catalogState.sort,
