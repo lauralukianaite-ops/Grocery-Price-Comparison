@@ -10,12 +10,13 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { formatPrice, formatUpdatedAt } from "../productFormatting";
+import { getDiscountPercentage, getProductDiscountPercentage } from "../catalogProducts";
 import ProductVisual from "./ProductVisual";
 
 export default function ProductCard({ product, actions }) {
   const { bestOffer } = product;
-  const hasDiscount =
-    bestOffer?.retailCost && bestOffer.retailCost > bestOffer.cost;
+  const hasDiscount = getDiscountPercentage(bestOffer) > 0;
+  const discountPercentage = getProductDiscountPercentage(product);
 
   return (
     <Card className="flex h-full flex-col gap-0 p-2 transition-shadow hover:shadow-md">
@@ -37,8 +38,10 @@ export default function ProductCard({ product, actions }) {
                 {formatUpdatedAt(product.lastUpdated)}
               </p>
             </div>
-            {hasDiscount && (
-              <Badge className="bg-emerald-100 text-emerald-800">Deal</Badge>
+            {discountPercentage > 0 && (
+              <Badge className="shrink-0 bg-emerald-100 text-emerald-800">
+                {product.offers.length > 1 ? "Up to " : ""}−{Math.round(discountPercentage)}%
+              </Badge>
             )}
           </div>
         </CardHeader>

@@ -31,6 +31,11 @@ public class ItemsRepository : IItemsRepository
         if (storeFilter is not null)
             latestPrices = latestPrices.Where(p => p.Store!.Name.ToLower() == storeFilter);
 
+        if (query.StoreIds is { Count: > 0 })
+        {
+            latestPrices = latestPrices.Where(price => query.StoreIds.Contains(price.StoreId));
+        }
+
         var perItem = latestPrices
             .GroupBy(p => p.ItemId)
             .Select(g => new
@@ -50,8 +55,20 @@ public class ItemsRepository : IItemsRepository
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var term = query.Search.Trim().ToLower();
-            itemsQuery = itemsQuery.Where(i => i.Name.ToLower().Contains(term));
+            var term = TextSimilarity.Normalize(query.Search);
+            // Match names without Lithuanian accents before counting results and selecting the page.
+            var searchableItems = itemsQuery.Select(item => new { Item = item, Name = item.Name.ToLower() });
+            foreach (var letter in "ąčęėįšųūž")
+            {
+                var accented = letter.ToString();
+                var plain = TextSimilarity.Normalize(accented);
+                searchableItems = searchableItems.Select(item => new
+                {
+                    item.Item,
+                    Name = item.Name.Replace(accented, plain)
+                });
+            }
+            itemsQuery = searchableItems.Where(item => item.Name.Contains(term)).Select(item => item.Item);
         }
 
         var joined = itemsQuery.Join(
@@ -65,13 +82,30 @@ public class ItemsRepository : IItemsRepository
                 stats.BestDiscount
             });
 
+        if (query.MinPrice is not null)
+        {
+            joined = joined.Where(entry => entry.BestPrice >= query.MinPrice.Value);
+        }
+        if (query.MaxPrice is not null)
+        {
+            joined = joined.Where(entry => entry.BestPrice <= query.MaxPrice.Value);
+        }
+        if (query.DiscountedOnly)
+        {
+            joined = joined.Where(entry => entry.BestDiscount > 0);
+        }
+
         var sorted = query.Sort switch
         {
             CatalogSort.PriceLow => joined.OrderBy(x => x.BestPrice)
-            .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+                .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
             CatalogSort.PriceHigh => joined.OrderByDescending(x => x.BestPrice)
                 .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
             CatalogSort.Name => joined.OrderBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
+            CatalogSort.NameDescending => joined.OrderByDescending(x => x.Item.Name)
+                .ThenBy(x => x.Item.Id),
+            CatalogSort.DiscountLow => joined.OrderBy(x => x.BestDiscount).ThenBy(x => x.BestPrice)
+                .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id),
             _ => joined.OrderByDescending(x => x.BestDiscount).ThenBy(x => x.BestPrice)
                 .ThenBy(x => x.Item.Name).ThenBy(x => x.Item.Id)
         };

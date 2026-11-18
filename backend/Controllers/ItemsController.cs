@@ -34,15 +34,33 @@ public class ItemsController : ControllerBase
         [FromQuery] string? query = null,
         [FromQuery] string? store = null,
         [FromQuery] string sort = "discount-high",
-        [FromQuery] string? ids = null)
+        [FromQuery] string? ids = null,
+        [FromQuery] string? storeIds = null,
+        [FromQuery] decimal? minPrice = null,
+        [FromQuery] decimal? maxPrice = null,
+        [FromQuery] bool discountedOnly = false)
     {
+        if (!CatalogRequestParser.TryParseStoreIds(storeIds, out var selectedStoreIds))
+        {
+            return BadRequest("Store IDs must be positive integers.");
+        }
+
+        if (minPrice < 0 || maxPrice < 0 || minPrice > maxPrice)
+        {
+            return BadRequest("Use a non-negative price range with the minimum no greater than the maximum.");
+        }
+
         var catalogQuery = new CatalogQuery(
             page,
             pageSize,
             query,
             store,
             CatalogRequestParser.ParseSort(sort),
-            CatalogRequestParser.ParseItemIds(ids));
+            CatalogRequestParser.ParseItemIds(ids),
+            StoreIds: selectedStoreIds,
+            MinPrice: minPrice,
+            MaxPrice: maxPrice,
+            DiscountedOnly: discountedOnly);
 
         return Ok(await _catalogService.GetCatalogAsync(catalogQuery));
     }

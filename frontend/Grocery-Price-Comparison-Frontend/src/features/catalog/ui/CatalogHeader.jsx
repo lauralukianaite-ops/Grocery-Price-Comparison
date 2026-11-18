@@ -1,11 +1,7 @@
 import { FlaskConical, Sparkles } from "lucide-react";
 import { Badge } from "../../../components/ui/badge";
 
-export default function CatalogHeader({
-  isLoading,
-  isUsingSeededProducts,
-  totalCount,
-}) {
+export default function CatalogHeader({ isUsingSeededProducts }) {
   return (
     <div className="flex flex-col gap-6 border-b border-border pb-8 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -25,12 +21,6 @@ export default function CatalogHeader({
           participating stores.
         </p>
       </div>
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        <span className="font-semibold text-foreground">
-          {isLoading ? "—" : totalCount}
-        </span>{" "}
-        products found
-      </p>
     </div>
   );
 }
