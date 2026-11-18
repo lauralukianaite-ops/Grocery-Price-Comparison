@@ -57,13 +57,18 @@ public class ItemsRepository : IItemsRepository
         {
             var term = TextSimilarity.Normalize(query.Search);
             // Match names without Lithuanian accents before counting results and selecting the page.
-            itemsQuery = itemsQuery.Where(i => i.Name.ToLower()
-                .Replace("ą", "a").Replace("č", "c")
-                .Replace("ę", "e").Replace("ė", "e")
-                .Replace("į", "i").Replace("š", "s")
-                .Replace("ų", "u").Replace("ū", "u")
-                .Replace("ž", "z")
-                .Contains(term));
+            var searchableItems = itemsQuery.Select(item => new { Item = item, Name = item.Name.ToLower() });
+            foreach (var letter in "ąčęėįšųūž")
+            {
+                var accented = letter.ToString();
+                var plain = TextSimilarity.Normalize(accented);
+                searchableItems = searchableItems.Select(item => new
+                {
+                    item.Item,
+                    Name = item.Name.Replace(accented, plain)
+                });
+            }
+            itemsQuery = searchableItems.Where(item => item.Name.Contains(term)).Select(item => item.Item);
         }
 
         var joined = itemsQuery.Join(
