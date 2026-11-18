@@ -4,7 +4,7 @@ A web app for comparing grocery prices across Lithuanian stores. Users build a b
 
 ## Stores Supported
 
-Prices are collected from Maxima, IKI, PROMO Cash&Carry, Rimi and 16 more stores.
+Prices are collected from Maxima, IKI, PROMO Cash&Carry, Rimi and 16 more store chains.
 
 ## Core Features
 
