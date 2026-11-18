@@ -26,17 +26,6 @@ export default function CatalogToolbar({
     : totalCount.toLocaleString() + " " + productLabel + " found";
 
   return (
-<<<<<<< HEAD
-<<<<<<< HEAD
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="hidden text-sm text-muted-foreground sm:block"></p>
-      <div className="flex min-w-0 flex-1 gap-2 sm:max-w-xl sm:justify-end">
-=======
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-      <div className="flex min-w-0 flex-1 gap-2 sm:max-w-2xl sm:justify-end">
->>>>>>> c65371a148dfa35ce79aaeb3f3115c12556897d3
-        <label className="relative min-w-0 flex-1 sm:max-w-xs">
-=======
     <div className="mb-6 flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">Find your next basket item</p>
@@ -44,7 +33,6 @@ export default function CatalogToolbar({
       </div>
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end">
         <label className="relative min-w-0 flex-1">
->>>>>>> feature/additional-sorting
           <span className="sr-only">Search all products</span>
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
