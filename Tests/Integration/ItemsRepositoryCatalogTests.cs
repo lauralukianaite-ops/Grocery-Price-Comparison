@@ -159,6 +159,38 @@ public class ItemsRepositoryCatalogTests
         Assert.Equal("Cherry", item.Name);
     }
 
+    [Theory]
+    [InlineData("Bulvės", "Bulvės", "Bulves")]
+    [InlineData("Bulves", "Bulvės", "Bulves")]
+    [InlineData("  BULVĖS  ", "BULVĖS", "BULVES")]
+    [InlineData("BULVES", "BULVĖS", "BULVES")]
+    [InlineData("vės", "Bulvės", "Bulves")]
+    [InlineData("ves", "Bulvės", "Bulves")]
+    [InlineData("Bulve\u0307s", "Bulvės", "Bulves")]
+    [InlineData("ąčęėįšųūž", "ĄČĘĖĮŠŲŪŽ", "ACEEISUUZ")]
+    [InlineData("aceeisuuz", "ĄČĘĖĮŠŲŪŽ", "ACEEISUUZ")]
+    public async Task Search_MatchesLithuanianAndPlainNamesBeforePagination(
+        string search, string accentedName, string plainName)
+    {
+        var (context, repo) = await SeedAsync();
+        await using var _ = context;
+        (await context.Items.FindAsync(2))!.Name = accentedName;
+        (await context.Items.FindAsync(3))!.Name = plainName;
+        await context.SaveChangesAsync();
+
+        var firstPage = await repo.GetCatalogPageAsync(Query(pageSize: 1, search: search));
+        var secondPage = await repo.GetCatalogPageAsync(Query(page: 2, pageSize: 1, search: search));
+
+        Assert.Equal(2, firstPage.TotalCount);
+        Assert.Equal(2, secondPage.TotalCount);
+        var firstItem = Assert.Single(firstPage.Items);
+        var secondItem = Assert.Single(secondPage.Items);
+        Assert.Equal(2, firstItem.Id);
+        Assert.Equal(accentedName, firstItem.Name);
+        Assert.Equal(3, secondItem.Id);
+        Assert.Equal(plainName, secondItem.Name);
+    }
+
     [Fact]
     public async Task Pagination_ReturnsRequestedSliceAndFullTotalCount()
     {
