@@ -1,59 +1,93 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getCatalog } from "../api/catalogApi";
+import { CATALOG_PAGE_SIZE } from "../catalogConstants";
 
-const EMPTY_CATALOG = {
-  items: [],
-  totalCount: 0,
-  page: 1,
-  pageSize: 12,
-};
+const EMPTY_CATALOG = { items: [], totalCount: 0, page: 1, pageSize: CATALOG_PAGE_SIZE };
+const SEARCH_DEBOUNCE_MS = 300;
 
 export function useProducts({
   page,
   pageSize,
   query,
+  store,
+  storeIds,
   sort,
+  minPrice,
+  maxPrice,
+  discountedOnly,
   latitude,
   longitude,
 }) {
-  const [catalog, setCatalog] = useState(EMPTY_CATALOG);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [result, setResult] = useState({
+    catalog: EMPTY_CATALOG,
+    request: null,
+    requestVersion: null,
+    error: "",
+  });
   const [requestVersion, setRequestVersion] = useState(0);
-
-  const retry = useCallback(() => {
-    setRequestVersion((current) => current + 1);
-  }, []);
+  const request = useMemo(
+    () => ({
+      page,
+      pageSize,
+      query,
+      store,
+      storeIds,
+      sort,
+      minPrice,
+      maxPrice,
+      discountedOnly,
+      latitude,
+      longitude,
+    }),
+    [
+      page,
+      pageSize,
+      query,
+      store,
+      storeIds,
+      sort,
+      minPrice,
+      maxPrice,
+      discountedOnly,
+      latitude,
+      longitude,
+    ],
+  );
+  const retry = useCallback(() => setRequestVersion((current) => current + 1), []);
 
   useEffect(() => {
     const controller = new AbortController();
-    const requestDelay = setTimeout(async () => {
-      setIsLoading(true);
-      setError("");
 
+    async function loadCatalog() {
       try {
-        const nextCatalog = await getCatalog(
-          { page, pageSize, query, sort, latitude, longitude },
-          controller.signal,
-        );
-        setCatalog(nextCatalog);
-      } catch (requestError) {
-        if (requestError.name !== "AbortError") {
-          setCatalog({ ...EMPTY_CATALOG, page, pageSize });
-          setError(requestError.message);
-        }
-      } finally {
+        const catalog = await getCatalog(request, controller.signal);
         if (!controller.signal.aborted) {
-          setIsLoading(false);
+          setResult({ catalog, request, requestVersion, error: "" });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted && error.name !== "AbortError") {
+          setResult({
+            catalog: {
+              ...EMPTY_CATALOG,
+              page: request.page,
+              pageSize: request.pageSize,
+            },
+            request,
+            requestVersion,
+            error: error.message,
+          });
         }
       }
-    }, query ? 300 : 0);
+    }
 
+    const requestDelay = setTimeout(loadCatalog, request.query ? SEARCH_DEBOUNCE_MS : 0);
     return () => {
       clearTimeout(requestDelay);
       controller.abort();
     };
-  }, [latitude, longitude, page, pageSize, query, requestVersion, sort]);
+  }, [request, requestVersion]);
 
-  return { ...catalog, isLoading, error, retry };
+  // Mark changed requests as loading before their debounce timer runs.
+  const isLoading = result.request !== request || result.requestVersion !== requestVersion;
+  return { ...result.catalog, isLoading, error: result.error, retry };
 }

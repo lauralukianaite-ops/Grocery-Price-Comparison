@@ -14,6 +14,29 @@ namespace backend.Tests;
 
 public class ItemsControllerTests
 {
+    [Theory]
+    [InlineData(-1, 5)]
+    [InlineData(0, -1)]
+    [InlineData(10, 1)]
+    public async Task GetItems_RejectsInvalidPriceRanges(int minPrice, int maxPrice)
+    {
+        var controller = new ItemsController(null!, null!, null!, null!);
+
+        var result = await controller.GetItems(minPrice: minPrice, maxPrice: maxPrice);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task GetItems_RejectsInvalidStoreIds()
+    {
+        var controller = new ItemsController(null!, null!, null!, null!);
+
+        var result = await controller.GetItems(storeIds: "invalid");
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
     [Fact]
     public async Task GetItems_ReturnsRequestedPageWithLatestStoreOffer()
     {
@@ -67,17 +90,20 @@ public class ItemsControllerTests
             });
         await context.SaveChangesAsync();
 
-        var repository = new ItemsRepository(context);
-        var controller = new ItemsController(null!, null!, null!, new CatalogService(repository));
+        var catalogService = new CatalogService(
+            new ItemsRepository(context),
+            new StoresRepository(context));
+
+        var controller = new ItemsController(null!, null!, null!, catalogService);
 
         var actionResult = await controller.GetItems(page: 2, pageSize: 1, sort: "price-high");
 
         var okResult = Assert.IsType<OkObjectResult>(actionResult);
-        var response = Assert.IsType<CatalogResponseDto>(okResult.Value);
+        var response = Assert.IsType<PagedResponse<CatalogItemDto>>(okResult.Value);
         var item = Assert.Single(response.Items);
         var offer = Assert.Single(item.Offers);
 
-        Assert.Equal(3, response.TotalCount);
+        Assert.Equal(2, response.TotalCount);
         Assert.Equal(2, response.Page);
         Assert.Equal("Banana", item.Name);
         Assert.Equal(1.50m, offer.Cost);

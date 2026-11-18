@@ -12,15 +12,29 @@ import ProductGridSkeleton from "./ProductGridSkeleton";
 
 export default function CatalogResults({
   items,
-  query,
+  hasSearchOrFilters,
   isLoading,
   isUsingSeededProducts,
+  error,
   onRetry,
-  onClearSearch,
+  onClearSearchAndFilters,
   renderProductActions,
 }) {
   if (isLoading) {
     return <ProductGridSkeleton />;
+  }
+
+  if (error && !isUsingSeededProducts) {
+    return (
+      <Alert className="py-4">
+        <PackageSearch aria-hidden="true" />
+        <AlertTitle>Could not load products</AlertTitle>
+        <AlertDescription>Please try again to load current store prices.</AlertDescription>
+        <AlertAction>
+          <Button size="sm" variant="outline" onClick={onRetry}>Retry</Button>
+        </AlertAction>
+      </Alert>
+    );
   }
 
   return (
@@ -30,8 +44,8 @@ export default function CatalogResults({
           <FlaskConical aria-hidden="true" />
           <AlertTitle>Showing sample products</AlertTitle>
           <AlertDescription>
-            The catalog API is not returning products yet, so these temporary
-            examples are shown instead.
+            The live catalog is temporarily unavailable. Browse these sample
+            products or retry to load current store prices.
           </AlertDescription>
           <AlertAction>
             <Button size="sm" variant="outline" onClick={onRetry}>
@@ -42,7 +56,7 @@ export default function CatalogResults({
       )}
 
       {items.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((product) => (
             <ProductCard
               key={product.id}
@@ -57,11 +71,11 @@ export default function CatalogResults({
             <PackageSearch className="mx-auto size-10 text-muted-foreground" />
             <h2 className="mt-4 text-lg font-semibold">No products found</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Try another search or clear the current search term.
+              Try another search, choose different stores, or widen your price range.
             </p>
-            {query && (
-              <Button className="mt-5" variant="outline" onClick={onClearSearch}>
-                Clear search
+            {hasSearchOrFilters && (
+              <Button className="mt-5" variant="outline" onClick={onClearSearchAndFilters}>
+                Clear search and filters
               </Button>
             )}
           </CardContent>

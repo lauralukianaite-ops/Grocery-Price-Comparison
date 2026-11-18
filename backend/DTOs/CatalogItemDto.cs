@@ -13,11 +13,3 @@ public record CatalogItemDto(
     string Name,
     List<CatalogOfferDto> Offers
 );
-
-public record CatalogResponseDto(
-    List<CatalogItemDto> Items,
-    int TotalCount,
-    int Page,
-    int PageSize
-);
-

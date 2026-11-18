@@ -1,5 +1,6 @@
 using backend.DTOs;
 using backend.Repositories;
+using backend.ValueObjects;
 using backend.Services.Interfaces;
 
 namespace backend.Services;
@@ -7,37 +8,29 @@ namespace backend.Services;
 public class CatalogService : ICatalogService
 {
     private readonly IItemsRepository _itemsRepository;
+    private readonly IStoresRepository _storesRepository;
 
-    public CatalogService(IItemsRepository itemsRepository)
+    public CatalogService(IItemsRepository itemsRepository, IStoresRepository storesRepository)
     {
         _itemsRepository = itemsRepository;
+        _storesRepository = storesRepository;
     }
 
-    public async Task<CatalogResponseDto> GetCatalogAsync(
-        int page,
-        int pageSize,
-        string? query,
-        string? sort,
-        string? ids)
+    public async Task<PagedResponse<CatalogItemDto>> GetCatalogAsync(CatalogQuery query)
     {
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, 100);
-        sort = sort is "price-high" or "name" ? sort : "price-low";
+        var normalized = query with
+        {
+            Page = Math.Max(query.Page, 1),
+            PageSize = Math.Clamp(query.PageSize, 1, 100)
+        };
 
-        var (items, totalCount) = await _itemsRepository.GetItemsPageAsync(
-            page,
-            pageSize,
-            query,
-            sort,
-            ParseItemIds(ids));
+        var result = await _itemsRepository.GetCatalogPageAsync(normalized);
 
-        var catalogItems = items.Select(item => new CatalogItemDto(
+        var catalogItems = result.Items.Select(item => new CatalogItemDto(
             item.Id,
             item.Name,
             item.Prices
                 .Where(price => price.Store is not null)
-                .GroupBy(price => price.StoreId)
-                .Select(group => group.OrderByDescending(price => price.RecordedAt).First())
                 .OrderBy(price => price.Store!.Name)
                 .Select(price => new CatalogOfferDto(
                     price.StoreId,
@@ -48,19 +41,13 @@ public class CatalogService : ICatalogService
                 .ToList()))
             .ToList();
 
-        return new CatalogResponseDto(catalogItems, totalCount, page, pageSize);
+        return new PagedResponse<CatalogItemDto>(catalogItems, result.TotalCount, normalized.Page, normalized.PageSize);
     }
 
-    private static List<int>? ParseItemIds(string? ids)
+    public async Task<List<StoreDto>> GetStoresAsync()
     {
-        if (string.IsNullOrWhiteSpace(ids)) return null;
-
-        return ids
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(value => int.TryParse(value, out var itemId) ? itemId : (int?)null)
-            .OfType<int>()
-            .Distinct()
-            .ToList();
+        var stores = await _storesRepository.GetAllAsync();
+        return stores.Select(s => new StoreDto(s.Id, s.Name)).ToList();
     }
 }
 
