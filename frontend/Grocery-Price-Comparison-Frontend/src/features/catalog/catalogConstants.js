@@ -2,7 +2,9 @@ export const CATALOG_PAGE_SIZE = 12;
 
 export const CATALOG_SORT_OPTIONS = Object.freeze([
   { value: "discount-high", label: "Discount: highest first" },
+  { value: "discount-low", label: "Discount: lowest first" },
   { value: "price-low", label: "Price: low to high" },
   { value: "price-high", label: "Price: high to low" },
-  { value: "name", label: "Product name" },
+  { value: "name", label: "Product name: A–Z" },
+  { value: "name-desc", label: "Product name: Z–A" },
 ]);

@@ -1,4 +1,7 @@
 import { get } from "../../../shared/api/apiClient";
+import { getBestOffer } from "../catalogProducts";
+import { CATALOG_PAGE_SIZE } from "../catalogConstants";
+import { DEFAULT_CATALOG_STATE } from "../catalogSearchParams";
 
 function normalizeOffer(price) {
   return {
@@ -26,10 +29,7 @@ function normalizeProduct(item) {
   const offers = (item.offers ?? item.prices ?? [])
     .map(normalizeOffer)
     .filter((offer) => Number.isFinite(offer.cost));
-  const bestOffer = offers.reduce(
-    (best, offer) => (!best || offer.cost < best.cost ? offer : best),
-    null,
-  );
+  const bestOffer = getBestOffer(offers);
   const explicitPriceHistory =
     item.priceHistory ?? item.priceHistoryPoints ?? item.history ?? [];
   const priceHistory = explicitPriceHistory
@@ -67,10 +67,14 @@ export async function getStores(signal) {
 export async function getCatalog(
   {
     page = 1,
-    pageSize = 12,
+    pageSize = CATALOG_PAGE_SIZE,
     query = "",
     store = "",
-    sort = "discount-high",
+    storeIds = "",
+    sort = DEFAULT_CATALOG_STATE.sort,
+    minPrice = "",
+    maxPrice = "",
+    discountedOnly = false,
     latitude,
     longitude,
   },
@@ -88,6 +92,19 @@ export async function getCatalog(
 
   if (store.trim()) {
     searchParams.set("store", store.trim());
+  }
+
+  if (storeIds) {
+    searchParams.set("storeIds", storeIds);
+  }
+  if (minPrice !== "") {
+    searchParams.set("minPrice", minPrice);
+  }
+  if (maxPrice !== "") {
+    searchParams.set("maxPrice", maxPrice);
+  }
+  if (discountedOnly) {
+    searchParams.set("discountedOnly", "true");
   }
 
   if (Number.isFinite(latitude) && Number.isFinite(longitude)) {

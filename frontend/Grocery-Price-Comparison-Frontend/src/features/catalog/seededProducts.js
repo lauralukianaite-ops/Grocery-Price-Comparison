@@ -1,3 +1,10 @@
+import {
+  compareCatalogProducts,
+  getBestOffer,
+  getProductDiscountPercentage,
+} from "./catalogProducts.js";
+import { DEFAULT_CATALOG_STATE, parseSelectedStores } from "./catalogSearchParams.js";
+
 const SAMPLE_HISTORY_DATES = [
   "2026-05-01",
   "2026-06-01",
@@ -144,26 +151,53 @@ const SEEDED_PRODUCTS = Object.freeze([
   },
 ]);
 
-function compareByPrice(left, right) {
-  return (left.bestOffer?.cost ?? Number.POSITIVE_INFINITY) -
-    (right.bestOffer?.cost ?? Number.POSITIVE_INFINITY);
+export function getSeededStores() {
+  const offers = SEEDED_PRODUCTS.flatMap((product) => product.offers);
+  const storesById = new Map(offers.map((offer) => [
+    offer.storeId,
+    { id: offer.storeId, name: offer.storeName },
+  ]));
+
+  return [...storesById.values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export function getSeededProducts({ query = "", sort = "price-low" } = {}) {
+export function getSeededProducts({
+  query = "",
+  store = "",
+  storeIds = "",
+  sort = DEFAULT_CATALOG_STATE.sort,
+  minPrice = "",
+  maxPrice = "",
+  discountedOnly = false,
+} = {}) {
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  const products = SEEDED_PRODUCTS.filter((product) =>
-    !normalizedQuery ||
-    product.name.toLocaleLowerCase().includes(normalizedQuery) ||
-    product.offers.some((offer) =>
-      offer.storeName.toLocaleLowerCase().includes(normalizedQuery),
-    ),
-  );
+  const normalizedStore = store.trim().toLocaleLowerCase();
+  const selectedStoreIds = new Set(parseSelectedStores(storeIds));
 
-  return [...products].sort((left, right) => {
-    if (sort === "price-high") return compareByPrice(right, left);
-    if (sort === "name") return left.name.localeCompare(right.name);
-    return compareByPrice(left, right);
-  });
+  return SEEDED_PRODUCTS
+    .filter((product) => matchesSearch(product, normalizedQuery))
+    .map((product) => {
+      const offers = product.offers.filter((offer) =>
+        (!normalizedStore || offer.storeName.toLocaleLowerCase() === normalizedStore) &&
+        (selectedStoreIds.size === 0 || selectedStoreIds.has(String(offer.storeId))),
+      );
+
+      return { ...product, offers, bestOffer: getBestOffer(offers) };
+    })
+    .filter((product) => {
+      if (!product.bestOffer) return false;
+
+      return (minPrice === "" || product.bestOffer.cost >= Number(minPrice)) &&
+        (maxPrice === "" || product.bestOffer.cost <= Number(maxPrice)) &&
+        (!discountedOnly || getProductDiscountPercentage(product) > 0);
+    })
+    .sort((left, right) => compareCatalogProducts(left, right, sort));
+}
+
+function matchesSearch(product, normalizedQuery) {
+  return !normalizedQuery ||
+    product.name.toLocaleLowerCase().includes(normalizedQuery) ||
+    product.offers.some((offer) => offer.storeName.toLocaleLowerCase().includes(normalizedQuery));
 }
 
 export function getSeededProduct(productId) {

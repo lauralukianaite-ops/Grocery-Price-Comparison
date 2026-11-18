@@ -170,4 +170,88 @@ public class ItemsRepositoryCatalogTests
         Assert.Equal(3, result.TotalCount);
         Assert.Equal("Date", Assert.Single(result.Items).Name);
     }
+
+    [Theory]
+    [InlineData(CatalogSort.NameDescending)]
+    [InlineData(CatalogSort.DiscountLow)]
+    public async Task AdditionalSortDirections_AreAppliedBeforePagination(CatalogSort sort)
+    {
+        var (context, repo) = await SeedAsync();
+        await using var _ = context;
+
+        var result = await repo.GetCatalogPageAsync(Query(sort));
+        var secondPage = await repo.GetCatalogPageAsync(Query(sort, page: 2, pageSize: 1));
+
+        Assert.Equal(new[] { "Date", "Cherry", "Banana" }, result.Items.Select(item => item.Name));
+        Assert.Equal("Cherry", Assert.Single(secondPage.Items).Name);
+        Assert.Equal(3, secondPage.TotalCount);
+    }
+
+    [Fact]
+    public async Task StoreIds_FilterCurrentOffersBeforePagination()
+    {
+        var (context, repo) = await SeedAsync();
+        await using var _ = context;
+
+        var result = await repo.GetCatalogPageAsync(
+            Query(CatalogSort.Name, page: 2, pageSize: 1) with { StoreIds = [2] });
+
+        Assert.Equal(2, result.TotalCount);
+        var cherry = Assert.Single(result.Items);
+        Assert.Equal("Cherry", cherry.Name);
+        Assert.All(cherry.Prices, price => Assert.Equal(2, price.StoreId));
+
+        var bothStores = await repo.GetCatalogPageAsync(Query() with { StoreIds = [1, 2] });
+        Assert.Equal(3, bothStores.TotalCount);
+    }
+
+    [Fact]
+    public async Task PriceRange_UsesInclusiveBestPriceBoundsBeforePagination()
+    {
+        var (context, repo) = await SeedAsync();
+        await using var _ = context;
+
+        var query = Query(CatalogSort.PriceLow, page: 2, pageSize: 1) with
+        {
+            MinPrice = 1m,
+            MaxPrice = 3m
+        };
+        var result = await repo.GetCatalogPageAsync(query);
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("Date", Assert.Single(result.Items).Name);
+
+        var empty = await repo.GetCatalogPageAsync(Query() with { MaxPrice = 0.5m });
+        Assert.Equal(0, empty.TotalCount);
+        Assert.Empty(empty.Items);
+    }
+
+    [Fact]
+    public async Task DiscountedOnly_MatchesDiscountsAtAnySelectedStore()
+    {
+        var (context, repo) = await SeedAsync();
+        await using var _ = context;
+        context.Prices.Add(new Price
+        {
+            ItemId = 3,
+            StoreId = 1,
+            Cost = 1m,
+            RetailCost = 1m,
+            RecordedAt = new DateTime(2026, 1, 3)
+        });
+        await context.SaveChangesAsync();
+
+        // Cherry's cheapest offer has no discount, but its other current offer does.
+        var result = await repo.GetCatalogPageAsync(
+            Query(page: 2, pageSize: 1) with { DiscountedOnly = true });
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal("Cherry", Assert.Single(result.Items).Name);
+
+        var selectedStore = await repo.GetCatalogPageAsync(Query() with
+        {
+            DiscountedOnly = true,
+            StoreIds = [1]
+        });
+        Assert.Equal("Banana", Assert.Single(selectedStore.Items).Name);
+    }
 }
