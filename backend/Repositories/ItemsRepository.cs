@@ -15,7 +15,7 @@ public class ItemsRepository : IItemsRepository
         _context = context;
     }
 
-    public async Task<CatalogPageResult> GetCatalogPageAsync(CatalogQuery query)
+    public async Task<PageResult<Item>> GetCatalogPageAsync(CatalogQuery query)
     {
         var storeFilter = string.IsNullOrWhiteSpace(query.Store)
             ? null
@@ -128,7 +128,7 @@ public class ItemsRepository : IItemsRepository
         foreach (var item in pageItems)
             item.Prices = offersByItem[item.Id].ToList();
 
-        return new CatalogPageResult(pageItems, totalCount);
+        return new PageResult<Item>(pageItems, totalCount);
     }
 
     public async Task<List<Item>> GetItemsWithPriceAndStoreAsync()

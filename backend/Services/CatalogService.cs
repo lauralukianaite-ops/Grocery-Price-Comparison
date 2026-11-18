@@ -16,7 +16,7 @@ public class CatalogService : ICatalogService
         _storesRepository = storesRepository;
     }
 
-    public async Task<CatalogResponseDto> GetCatalogAsync(CatalogQuery query)
+    public async Task<PagedResponse<CatalogItemDto>> GetCatalogAsync(CatalogQuery query)
     {
         var normalized = query with
         {
@@ -41,7 +41,7 @@ public class CatalogService : ICatalogService
                 .ToList()))
             .ToList();
 
-        return new CatalogResponseDto(catalogItems, result.TotalCount, normalized.Page, normalized.PageSize);
+        return new PagedResponse<CatalogItemDto>(catalogItems, result.TotalCount, normalized.Page, normalized.PageSize);
     }
 
     public async Task<List<StoreDto>> GetStoresAsync()
