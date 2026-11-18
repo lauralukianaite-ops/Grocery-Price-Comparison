@@ -55,8 +55,15 @@ public class ItemsRepository : IItemsRepository
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var term = query.Search.Trim().ToLower();
-            itemsQuery = itemsQuery.Where(i => i.Name.ToLower().Contains(term));
+            var term = TextSimilarity.Normalize(query.Search);
+            // Match names without Lithuanian accents before counting results and selecting the page.
+            itemsQuery = itemsQuery.Where(i => i.Name.ToLower()
+                .Replace("ą", "a").Replace("č", "c")
+                .Replace("ę", "e").Replace("ė", "e")
+                .Replace("į", "i").Replace("š", "s")
+                .Replace("ų", "u").Replace("ū", "u")
+                .Replace("ž", "z")
+                .Contains(term));
         }
 
         var joined = itemsQuery.Join(
