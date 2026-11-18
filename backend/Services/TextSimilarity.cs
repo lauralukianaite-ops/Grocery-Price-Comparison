@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
 
+namespace backend.Services;
+
 public static class TextSimilarity
 {
     public static string Normalize(string text)

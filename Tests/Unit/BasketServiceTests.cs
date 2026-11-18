@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Moq;
 using backend.DTOs;
 using backend.Entities;
 using backend.Enums;
@@ -20,7 +19,7 @@ public class BasketServiceTests
     private const double UserLongitude = 25.2797;
 
     private static readonly BasketService Service = 
-        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex(), new Mock<IItemsRepository>().Object), null);
+        new BasketService(null, null, new FakeDiscountService(null), new ItemSimilarityService(new ItemSimilarityIndex(), null), null);
 
     private static Item I(int id, string name)
     {
