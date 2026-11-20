@@ -8,16 +8,19 @@ namespace scraper;
 public class BarboraScraper : IScraper
 {
     private readonly IStoreConfigLoader _configLoader;
-    private readonly String _configFilePath;
+    private readonly ILogger<BarboraScraper> _logger;
+    private readonly string _configFilePath;
 
     public string StoreName { get; private set;} = string.Empty;
     private Dictionary<string, List<string>> AllStores = new();
 
     // constructor opens and reads all of the "BarboraStores.json" provided store information
-    public BarboraScraper(IStoreConfigLoader configLoader, 
+    public BarboraScraper(IStoreConfigLoader configLoader,
+                            ILogger<BarboraScraper> logger,
                             string configFilePath = "Data/BarboraStores.json")
     {
         _configLoader = configLoader;
+        _logger = logger;
         _configFilePath = configFilePath;
     }
 
@@ -51,8 +54,30 @@ public class BarboraScraper : IScraper
                 while (true)
                 {
                     // 1. opens site and takes HTML answer
-                    var response = await page.GotoAsync($"{url}?page={pageUrl}");
-                    if (response == null) continue;
+                    IResponse? response;
+                    try
+                    {
+                        response = await page.GotoAsync(
+                            $"{url}?page={pageUrl}",
+                            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        _logger.LogWarning(ex, "Timed out navigating to Barbora page {Page} at {Url}; moving to the next category", pageUrl, url);
+                        break;
+                    }
+
+                    if (response == null)
+                    {
+                        _logger.LogWarning("No response received for Barbora page {Page} at {Url}; moving to the next category", pageUrl, url);
+                        break;
+                    }
+
+                    if (response.Status != 200)
+                    {
+                        _logger.LogWarning("Barbora page {Page} at {Url} returned HTTP {Status}; moving to the next category", pageUrl, url, response.Status);
+                        break;
+                    }
 
                     var items = await ExtractItemsAsync(response);
                     if (items.Count == 0)break;
@@ -64,7 +89,7 @@ public class BarboraScraper : IScraper
                     }
                     
                     pageUrl++;
-                    await Task.Delay(rand.Next(2000, 3500), cancellationToken);
+                    await Task.Delay(rand.Next(500, 1000), cancellationToken);
                 }
             }
         }
@@ -74,19 +99,22 @@ public class BarboraScraper : IScraper
     {
         var html = await response.TextAsync();
 
-        // 1. finds window.b_productList and cuts it and converts to JSON         
-        int markerIndex = html.IndexOf("window.b_productList = [");
-        if (markerIndex == -1){
+        // 1. finds inventories and cuts it and converts to JSON         
+        string marker = "\"inventories\"";
+        int markerIndex = html.IndexOf(marker);
+        if (markerIndex == -1)
+        {
             return new List<Item>();
         } 
 
-        int start = markerIndex + "window.b_productList = ".Length;
-        int end = html.IndexOf("];", start);
-        if (end == -1 || end <= start){
+        int start = html.IndexOf('[', markerIndex); // starts from '['
+        int end = html.IndexOf("}],", start);
+        if (end == -1 || end <= start)
+        {
             return new List<Item>();
         } 
 
-        var jsonText = html[start..(end + 1)];
+        var jsonText = html[start..(end + 2)];
 
         // 2. takes jsonText
         var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
@@ -102,11 +130,21 @@ public class BarboraScraper : IScraper
                 new Price
                 {
                     Cost = p.GetProperty("price").GetDecimal(),
-                    RetailCost = p.GetNullableDecimal("retail_price"),
+                    RetailCost = GetRetailCost(p),
                     RecordedAt = DateTime.UtcNow
                 }
             }
         }).ToList();
+    }
+
+    private static decimal? GetRetailCost(JsonElement product)
+    {
+        if (!product.TryGetProperty("promotion", out var promo) || promo.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        return promo.GetNullableDecimal("oldPrice");
     }
 
     public async Task InitializeAsync()
