@@ -108,15 +108,20 @@ public class BarboraScraper : IScraper
         } 
 
         int start = html.IndexOf('[', markerIndex); // starts from '['
-        int end = html.IndexOf("}],", start);
-        if (end == -1 || end <= start)
+        if (start == -1)
         {
             return new List<Item>();
-        } 
+        }
 
-        var jsonText = html[start..(end + 2)];
+        // 2. lets Utf8JsonReader find the end of the complete inventories array
+        var bytes = System.Text.Encoding.UTF8.GetBytes(html[start..]);
+        var reader = new Utf8JsonReader(bytes);
+        if (!reader.Read() || reader.TokenType != JsonTokenType.StartArray || !reader.TrySkip())
+        {
+            return new List<Item>();
+        }
 
-        // 2. takes jsonText
+        var jsonText = System.Text.Encoding.UTF8.GetString(bytes.AsSpan(0, (int)reader.BytesConsumed));
         var json = JsonSerializer.Deserialize<JsonElement>(jsonText);
 
         // 3. scrapes item information only when it is in stock (the status is "active")
