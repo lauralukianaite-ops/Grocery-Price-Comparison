@@ -41,6 +41,7 @@ builder.Services.AddScoped<IItemSimilarityService, ItemSimilarityService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IFakeDiscountService, FakeDiscountService>();
 builder.Services.AddScoped<IBasketService, BasketService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 const string FrontendCors = "Frontend";
 builder.Services.AddCors(options =>
