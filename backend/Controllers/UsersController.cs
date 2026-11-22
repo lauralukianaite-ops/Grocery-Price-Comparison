@@ -19,7 +19,7 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetMe()
     {
-        var user = await _usersService.GetOrCreateCurrentUserAsync(User);
+        var user = await _userService.GetOrCreateCurrentUserAsync(User);
         return Ok(user);
     }
 }
