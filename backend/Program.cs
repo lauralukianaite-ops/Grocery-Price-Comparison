@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Repositories;
 using backend.Services.Interfaces;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 DotNetEnv.Env.Load();
 
@@ -53,6 +54,16 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddHttpClient<IDistanceProvider, GoogleDistanceProvider>();
+var auth0Domain = builder.Configuration["Auth0:Domain"] ?? throw new InvalidOperationException("Auth0 Domain is missing.");
+var auth0Audience = builder.Configuration["Auth0:Audience"] ?? throw new InvalidOperationException("Auth0 Audience is missing.");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = $"https://{auth0Domain}/";
+        options.Audience = auth0Audience;
+        options.MapInboundClaims = false;
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -74,5 +85,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(FrontendCors);
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
