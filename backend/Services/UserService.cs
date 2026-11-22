@@ -2,6 +2,7 @@
 using backend.Entities;
 using backend.Repositories;
 using backend.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
@@ -28,7 +29,16 @@ public class UserService : IUserService
                 Auth0Id = auth0Id,
                 Email = email
             };
-            await _usersRepository.AddUserAsync(user);
+            try
+            {
+                await _usersRepository.AddUserAsync(user);
+            }
+            catch (DbUpdateException)
+            {
+                user = await _usersRepository.GetUserByAuth0IdAsync(auth0Id);
+                if (user == null) throw;
+            }
+            
         }
         return user;
     }

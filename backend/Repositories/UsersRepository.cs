@@ -20,7 +20,15 @@ public class UsersRepository : IUsersRepository
 
     public async Task AddUserAsync(AppUser user)
     {
-        _context.AppUsers.Add(user);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.AppUsers.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            _context.Entry(user).State = EntityState.Detached;
+            throw;
+        }
     }
 }
