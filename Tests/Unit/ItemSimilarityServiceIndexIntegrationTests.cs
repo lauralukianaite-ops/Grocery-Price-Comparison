@@ -39,7 +39,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_ReturnsMilkVariants_AndExcludesBread()
+    public async Task GetSimilarItemsAsync_LowThresholdWithMilkQuery_ReturnsMilkVariantsAndExcludesBread()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(2, "Pienas 2.5% (500ml)", ("Maxima", 1.29m, 0)),
@@ -56,7 +56,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_WithHighThreshold_ReturnsNearDuplicates_AndExcludesUnrelated()
+    public async Task GetSimilarItemsAsync_HighThresholdWithTransposedWords_ReturnsNearDuplicatesAndExcludesUnrelated()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Prancūziškas česnakinis batonas", ("Maxima", 2.00m, 0)),
@@ -71,7 +71,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_ReturnsLatestPricePerStore_ForMatchedItem()
+    public async Task GetSimilarItemsAsync_MultipleHistoricalPricesPerStore_ReturnsLatestPricePerStore()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Apelsinų sultys 100%",
@@ -87,7 +87,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_ReturnsBestMatchFirst_WithScoreOfOneForExactName()
+    public async Task GetSimilarItemsAsync_ExactAndPartialMatches_ReturnsBestMatchFirstWithScoreOfOne()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Pienas 2.5% 1l dvaro", ("Maxima", 1.0m, 0)),
@@ -100,7 +100,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_IsDiacriticInsensitive()
+    public async Task GetSimilarItemsAsync_QueryWithoutDiacritics_MatchesLithuanianCharacters()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Šviežia varškė 9%", ("Maxima", 1.5m, 0)));
@@ -111,7 +111,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_ReturnsEmpty_WhenIndexWasNeverRefreshed()
+    public async Task GetSimilarItemsAsync_IndexNeverRefreshed_ReturnsEmptyList()
     {
         var service = new ItemSimilarityService(new ItemSimilarityIndex(), _repositoryMock.Object);
 
@@ -121,7 +121,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task RefreshIndexAsync_ReplacesOldData_WithNewRepositoryData()
+    public async Task RefreshIndexAsync_RepositoryDataUpdated_ReplacesOldIndexData()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Pienas", ("Maxima", 1.0m, 0)));
@@ -139,7 +139,7 @@ public class ItemSimilarityServiceIndexIntegrationTests
     }
 
     [Fact]
-    public async Task Search_ThrowsArgumentException_ForEmptyName()
+    public async Task GetSimilarItemsAsync_EmptyQueryName_ThrowsArgumentException()
     {
         var service = await CreateLoadedServiceAsync(
             MakeItem(1, "Ananasas", ("Maxima", 1.0m, 0)));

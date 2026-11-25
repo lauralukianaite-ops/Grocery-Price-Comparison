@@ -24,7 +24,7 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task GetCatalogAsync_ClampsPageAndPageSizeBeforeCallingRepository()
+    public async Task GetCatalogAsync_OutOfRangePageAndPageSize_ClampsValuesBeforeCallingRepository()
     {
         _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
               .ReturnsAsync(new List<Price>());
@@ -39,7 +39,7 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task GetCatalogAsync_MapsOffersOrderedByStoreName()
+    public async Task GetCatalogAsync_MultipleStoresForSingleItem_MapsOffersOrderedByStoreName()
     {
         var iki = new Store { Id = 1, Name = "Iki" };
         var rimi = new Store { Id = 2, Name = "Rimi" };
@@ -62,7 +62,7 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task GetStoresAsync_MapsEntitiesToDtos()
+    public async Task GetStoresAsync_ExistingStores_MapsEntitiesToDtos()
     {
         _stores.Setup(r => r.GetAllAsync())
                .ReturnsAsync([new Store { Id = 1, Name = "Iki" }]);

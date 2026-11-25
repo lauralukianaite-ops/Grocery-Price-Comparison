@@ -82,7 +82,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task ReturnsOnlyLatestPricePerStore()
+    public async Task GetCatalogAsync_WhenMultiplePricesExistForStore_ReturnsOnlyLatestPricePerStore()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -95,7 +95,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task DiscountHigh_OrdersByBiggestDiscountFirst()
+    public async Task GetCatalogAsync_WhenSortIsDiscountHigh_OrdersByBiggestDiscountFirst()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -106,7 +106,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task PriceLow_OrdersByBestPriceAscending()
+    public async Task GetCatalogAsync_WhenSortIsPriceLow_OrdersByBestPriceAscending()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -117,7 +117,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task PriceHigh_OrdersByBestPriceDescending()
+    public async Task GetCatalogAsync_WhenSortIsPriceHigh_OrdersByBestPriceDescending()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -128,7 +128,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task Name_OrdersAlphabetically()
+    public async Task GetCatalogAsync_WhenSortIsName_OrdersAlphabetically()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -139,19 +139,19 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task StoreFilter_IsCaseInsensitiveAndReturnsOnlyThatStoresOffers()
+    public async Task GetCatalogAsync_WhenStoreFilterIsProvided_ReturnsOnlyThatStoresOffersCaseInsensitively()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
 
         var result = await service.GetCatalogAsync(Query(store: "rimi"));
 
-        Assert.Equal(2, result.TotalCount); // Bananas ir Citrina
+        Assert.Equal(2, result.TotalCount);
         Assert.All(result.Items, i => Assert.All(i.Offers, p => Assert.Equal("Rimi", p.StoreName)));
     }
 
     [Fact]
-    public async Task Search_FiltersByNameCaseInsensitively()
+    public async Task GetCatalogAsync_WhenSearchTermIsProvided_FiltersByNameCaseInsensitively()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -172,7 +172,7 @@ public class CatalogServiceIntegrationTests
     [InlineData("Bulve\u0307s", "Bulvės", "Bulves")]
     [InlineData("ąčęėįšųūž", "ĄČĘĖĮŠŲŪŽ", "ACEEISUUZ")]
     [InlineData("aceeisuuz", "ĄČĘĖĮŠŲŪŽ", "ACEEISUUZ")]
-    public async Task Search_MatchesLithuanianAndPlainNamesBeforePagination(
+    public async Task GetCatalogAsync_WhenSearchContainsLithuanianCharacters_MatchesAccentedAndPlainNamesBeforePagination(
         string search, string accentedName, string plainName)
     {
         var (context, service) = await SeedAsync();
@@ -195,7 +195,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task Pagination_ReturnsRequestedSliceAndFullTotalCount()
+    public async Task GetCatalogAsync_WhenPaginationIsApplied_ReturnsRequestedSliceAndFullTotalCount()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -209,7 +209,7 @@ public class CatalogServiceIntegrationTests
     [Theory]
     [InlineData(CatalogSort.NameDescending)]
     [InlineData(CatalogSort.DiscountLow)]
-    public async Task AdditionalSortDirections_AreAppliedBeforePagination(CatalogSort sort)
+    public async Task GetCatalogAsync_WhenSecondarySortDirectionsAreUsed_SortsBeforePagination(CatalogSort sort)
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -223,7 +223,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task StoreIds_FilterCurrentOffersBeforePagination()
+    public async Task GetCatalogAsync_WhenStoreIdsAreProvided_FiltersCurrentOffersBeforePagination()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -241,7 +241,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task PriceRange_UsesInclusiveBestPriceBoundsBeforePagination()
+    public async Task GetCatalogAsync_WhenPriceRangeIsProvided_FiltersByInclusiveBestPriceBoundsBeforePagination()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -262,7 +262,7 @@ public class CatalogServiceIntegrationTests
     }
 
     [Fact]
-    public async Task DiscountedOnly_MatchesDiscountsAtAnySelectedStore()
+    public async Task GetCatalogAsync_WhenDiscountedOnlyIsTrue_MatchesDiscountsAtAnySelectedStore()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -276,7 +276,6 @@ public class CatalogServiceIntegrationTests
         });
         await context.SaveChangesAsync();
 
-        // Cherry's cheapest offer has no discount, but its other current offer does.
         var result = await service.GetCatalogAsync(
             Query(page: 2, pageSize: 1) with { DiscountedOnly = true });
         Assert.Equal(2, result.TotalCount);
