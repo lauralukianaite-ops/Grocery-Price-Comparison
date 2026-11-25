@@ -1,3 +1,5 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +8,7 @@ using backend.Data;
 using backend.Entities;
 using backend.Enums;
 using backend.Repositories;
+using backend.Services;
 using backend.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -28,7 +31,7 @@ public class ItemsRepositoryCatalogTests
         List<int>? ids = null) =>
         new(page, pageSize, search, store, sort, ids);
 
-    private static async Task<(AppDbContext Context, ItemsRepository Repo)> SeedAsync()
+    private static async Task<(AppDbContext Context, CatalogService Service)> SeedAsync()
     {
         var context = CreateContext();
         var iki = new Store { Id = 1, Name = "Iki" };
@@ -63,16 +66,16 @@ public class ItemsRepositoryCatalogTests
                 ]
             });
         await context.SaveChangesAsync();
-        return (context, new ItemsRepository(context));
+        return (context, new CatalogService(new ItemsRepository(context), new StoresRepository(context)));
     }
 
     [Fact]
     public async Task ExcludesItemsWithoutPrices()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query());
+        var result = await service.GetCatalogAsync(Query());
 
         Assert.Equal(3, result.TotalCount);
         Assert.DoesNotContain(result.Items, i => i.Name == "Apple");
@@ -81,23 +84,23 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task ReturnsOnlyLatestPricePerStore()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(ids: [2]));
+        var result = await service.GetCatalogAsync(Query(ids: [2]));
 
         var banana = Assert.Single(result.Items);
-        Assert.Equal(2, banana.Prices.Count);
-        Assert.DoesNotContain(banana.Prices, p => p.Cost == 5m);
+        Assert.Equal(2, banana.Offers.Count);
+        Assert.DoesNotContain(banana.Offers, p => p.Cost == 5m);
     }
 
     [Fact]
     public async Task DiscountHigh_OrdersByBiggestDiscountFirst()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(CatalogSort.DiscountHigh));
+        var result = await service.GetCatalogAsync(Query(CatalogSort.DiscountHigh));
 
         Assert.Equal(["Banana", "Cherry", "Date"], result.Items.Select(i => i.Name));
     }
@@ -105,10 +108,10 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task PriceLow_OrdersByBestPriceAscending()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(CatalogSort.PriceLow));
+        var result = await service.GetCatalogAsync(Query(CatalogSort.PriceLow));
 
         Assert.Equal(["Banana", "Date", "Cherry"], result.Items.Select(i => i.Name));
     }
@@ -116,10 +119,10 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task PriceHigh_OrdersByBestPriceDescending()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(CatalogSort.PriceHigh));
+        var result = await service.GetCatalogAsync(Query(CatalogSort.PriceHigh));
 
         Assert.Equal(["Cherry", "Date", "Banana"], result.Items.Select(i => i.Name));
     }
@@ -127,10 +130,10 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task Name_OrdersAlphabetically()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(CatalogSort.Name));
+        var result = await service.GetCatalogAsync(Query(CatalogSort.Name));
 
         Assert.Equal(["Banana", "Cherry", "Date"], result.Items.Select(i => i.Name));
     }
@@ -138,22 +141,22 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task StoreFilter_IsCaseInsensitiveAndReturnsOnlyThatStoresOffers()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(store: "rimi"));
+        var result = await service.GetCatalogAsync(Query(store: "rimi"));
 
         Assert.Equal(2, result.TotalCount); // Banana ir Cherry
-        Assert.All(result.Items, i => Assert.All(i.Prices, p => Assert.Equal("Rimi", p.Store!.Name)));
+        Assert.All(result.Items, i => Assert.All(i.Offers, p => Assert.Equal("Rimi", p.StoreName)));
     }
 
     [Fact]
     public async Task Search_FiltersByNameCaseInsensitively()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(search: "  CHER "));
+        var result = await service.GetCatalogAsync(Query(search: "  CHER "));
 
         var item = Assert.Single(result.Items);
         Assert.Equal("Cherry", item.Name);
@@ -172,14 +175,14 @@ public class ItemsRepositoryCatalogTests
     public async Task Search_MatchesLithuanianAndPlainNamesBeforePagination(
         string search, string accentedName, string plainName)
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
         (await context.Items.FindAsync(2))!.Name = accentedName;
         (await context.Items.FindAsync(3))!.Name = plainName;
         await context.SaveChangesAsync();
 
-        var firstPage = await repo.GetCatalogPageAsync(Query(pageSize: 1, search: search));
-        var secondPage = await repo.GetCatalogPageAsync(Query(page: 2, pageSize: 1, search: search));
+        var firstPage = await service.GetCatalogAsync(Query(pageSize: 1, search: search));
+        var secondPage = await service.GetCatalogAsync(Query(page: 2, pageSize: 1, search: search));
 
         Assert.Equal(2, firstPage.TotalCount);
         Assert.Equal(2, secondPage.TotalCount);
@@ -194,10 +197,10 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task Pagination_ReturnsRequestedSliceAndFullTotalCount()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(CatalogSort.Name, page: 2, pageSize: 2));
+        var result = await service.GetCatalogAsync(Query(CatalogSort.Name, page: 2, pageSize: 2));
 
         Assert.Equal(3, result.TotalCount);
         Assert.Equal("Date", Assert.Single(result.Items).Name);
@@ -208,11 +211,11 @@ public class ItemsRepositoryCatalogTests
     [InlineData(CatalogSort.DiscountLow)]
     public async Task AdditionalSortDirections_AreAppliedBeforePagination(CatalogSort sort)
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(Query(sort));
-        var secondPage = await repo.GetCatalogPageAsync(Query(sort, page: 2, pageSize: 1));
+        var result = await service.GetCatalogAsync(Query(sort));
+        var secondPage = await service.GetCatalogAsync(Query(sort, page: 2, pageSize: 1));
 
         Assert.Equal(new[] { "Date", "Cherry", "Banana" }, result.Items.Select(item => item.Name));
         Assert.Equal("Cherry", Assert.Single(secondPage.Items).Name);
@@ -222,25 +225,25 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task StoreIds_FilterCurrentOffersBeforePagination()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await repo.GetCatalogPageAsync(
+        var result = await service.GetCatalogAsync(
             Query(CatalogSort.Name, page: 2, pageSize: 1) with { StoreIds = [2] });
 
         Assert.Equal(2, result.TotalCount);
         var cherry = Assert.Single(result.Items);
         Assert.Equal("Cherry", cherry.Name);
-        Assert.All(cherry.Prices, price => Assert.Equal(2, price.StoreId));
+        Assert.All(cherry.Offers, price => Assert.Equal(2, price.StoreId));
 
-        var bothStores = await repo.GetCatalogPageAsync(Query() with { StoreIds = [1, 2] });
+        var bothStores = await service.GetCatalogAsync(Query() with { StoreIds = [1, 2] });
         Assert.Equal(3, bothStores.TotalCount);
     }
 
     [Fact]
     public async Task PriceRange_UsesInclusiveBestPriceBoundsBeforePagination()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
 
         var query = Query(CatalogSort.PriceLow, page: 2, pageSize: 1) with
@@ -248,12 +251,12 @@ public class ItemsRepositoryCatalogTests
             MinPrice = 1m,
             MaxPrice = 3m
         };
-        var result = await repo.GetCatalogPageAsync(query);
+        var result = await service.GetCatalogAsync(query);
 
         Assert.Equal(2, result.TotalCount);
         Assert.Equal("Date", Assert.Single(result.Items).Name);
 
-        var empty = await repo.GetCatalogPageAsync(Query() with { MaxPrice = 0.5m });
+        var empty = await service.GetCatalogAsync(Query() with { MaxPrice = 0.5m });
         Assert.Equal(0, empty.TotalCount);
         Assert.Empty(empty.Items);
     }
@@ -261,7 +264,7 @@ public class ItemsRepositoryCatalogTests
     [Fact]
     public async Task DiscountedOnly_MatchesDiscountsAtAnySelectedStore()
     {
-        var (context, repo) = await SeedAsync();
+        var (context, service) = await SeedAsync();
         await using var _ = context;
         context.Prices.Add(new Price
         {
@@ -274,12 +277,12 @@ public class ItemsRepositoryCatalogTests
         await context.SaveChangesAsync();
 
         // Cherry's cheapest offer has no discount, but its other current offer does.
-        var result = await repo.GetCatalogPageAsync(
+        var result = await service.GetCatalogAsync(
             Query(page: 2, pageSize: 1) with { DiscountedOnly = true });
         Assert.Equal(2, result.TotalCount);
         Assert.Equal("Cherry", Assert.Single(result.Items).Name);
 
-        var selectedStore = await repo.GetCatalogPageAsync(Query() with
+        var selectedStore = await service.GetCatalogAsync(Query() with
         {
             DiscountedOnly = true,
             StoreIds = [1]
