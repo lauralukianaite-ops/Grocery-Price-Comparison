@@ -15,10 +15,6 @@ public class ItemsRepository : IItemsRepository
 
     public async Task<List<Price>> GetLatestPricesWithStoreAsync(string? storeName = null, List<int>? storeIds = null)
     {
-        var storeFilter = string.IsNullOrWhiteSpace(storeName)
-            ? null
-            : storeName.Trim().ToLower();
-
         var latestPrices = _context.Prices.AsNoTracking()
             .Where(p => !_context.Prices.Any(n =>
                 n.ItemId == p.ItemId &&
@@ -26,8 +22,8 @@ public class ItemsRepository : IItemsRepository
                 (n.RecordedAt > p.RecordedAt ||
                  (n.RecordedAt == p.RecordedAt && n.Id > p.Id))));
 
-        if (storeFilter is not null)
-            latestPrices = latestPrices.Where(p => p.Store!.Name.ToLower() == storeFilter);
+        if (!string.IsNullOrWhiteSpace(storeName))
+            latestPrices = latestPrices.Where(p => p.Store!.Name.ToLower() == storeName);
 
         if (storeIds is { Count: > 0 })
         {
@@ -36,6 +32,7 @@ public class ItemsRepository : IItemsRepository
 
         return await latestPrices
             .Include(p => p.Store)
+            .Include(p => p.Item)
             .ToListAsync();
     }
 

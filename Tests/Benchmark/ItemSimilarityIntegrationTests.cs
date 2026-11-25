@@ -20,7 +20,7 @@ public class ItemSimilarityIntegrationTests
         _output = output;
     }
 
-    [Fact]
+[Fact(Skip = "Manual DB benchmark")]
 public async Task GetSimilarItemsAsync_MeasuresRealDbAndAlgorithmTime()
 {
     var connectionString = GetConnectionString();

@@ -15,7 +15,7 @@ using Xunit;
 
 namespace backend.Tests;
 
-public class ItemsRepositoryCatalogTests
+public class CatalogServiceIntegrationTests
 {
     private static AppDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<AppDbContext>()
@@ -38,31 +38,31 @@ public class ItemsRepositoryCatalogTests
         var rimi = new Store { Id = 2, Name = "Rimi" };
 
         context.Items.AddRange(
-            new Item { Id = 1, Name = "Apple" },
+            new Item { Id = 1, Name = "Ananasas" },
             new Item
             {
-                Id = 2, Name = "Banana",
+                Id = 2, Name = "Bananas",
                 Prices =
                 [
                     new Price { Id = 1, StoreId = 1, Store = iki, Cost = 5m, RetailCost = 5m, RecordedAt = new DateTime(2026, 1, 1) },
-                    new Price { Id = 2, StoreId = 1, Store = iki, Cost = 1m, RetailCost = 2m, RecordedAt = new DateTime(2026, 1, 2) }, // 50 %
+                    new Price { Id = 2, StoreId = 1, Store = iki, Cost = 1m, RetailCost = 2m, RecordedAt = new DateTime(2026, 1, 2) },
                     new Price { Id = 3, StoreId = 2, Store = rimi, Cost = 1.5m, RetailCost = null, RecordedAt = new DateTime(2026, 1, 2) }
                 ]
             },
             new Item
             {
-                Id = 3, Name = "Cherry",
+                Id = 3, Name = "Citrina",
                 Prices =
                 [
-                    new Price { Id = 4, StoreId = 2, Store = rimi, Cost = 9m, RetailCost = 10m, RecordedAt = new DateTime(2026, 1, 2) } // 10 %
+                    new Price { Id = 4, StoreId = 2, Store = rimi, Cost = 9m, RetailCost = 10m, RecordedAt = new DateTime(2026, 1, 2) }
                 ]
             },
             new Item
             {
-                Id = 4, Name = "Date",
+                Id = 4, Name = "Datule",
                 Prices =
                 [
-                    new Price { Id = 5, StoreId = 1, Store = iki, Cost = 3m, RetailCost = null, RecordedAt = new DateTime(2026, 1, 2) } // 0 %
+                    new Price { Id = 5, StoreId = 1, Store = iki, Cost = 3m, RetailCost = null, RecordedAt = new DateTime(2026, 1, 2) }
                 ]
             });
         await context.SaveChangesAsync();
@@ -70,7 +70,7 @@ public class ItemsRepositoryCatalogTests
     }
 
     [Fact]
-    public async Task ExcludesItemsWithoutPrices()
+    public async Task GetCatalogAsync_WhenItemsHaveNoPrices_ExcludeThem()
     {
         var (context, service) = await SeedAsync();
         await using var _ = context;
@@ -78,7 +78,7 @@ public class ItemsRepositoryCatalogTests
         var result = await service.GetCatalogAsync(Query());
 
         Assert.Equal(3, result.TotalCount);
-        Assert.DoesNotContain(result.Items, i => i.Name == "Apple");
+        Assert.DoesNotContain(result.Items, i => i.Name == "Ananasas");
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class ItemsRepositoryCatalogTests
 
         var result = await service.GetCatalogAsync(Query(CatalogSort.DiscountHigh));
 
-        Assert.Equal(["Banana", "Cherry", "Date"], result.Items.Select(i => i.Name));
+        Assert.Equal(["Bananas", "Citrina", "Datule"], result.Items.Select(i => i.Name));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class ItemsRepositoryCatalogTests
 
         var result = await service.GetCatalogAsync(Query(CatalogSort.PriceLow));
 
-        Assert.Equal(["Banana", "Date", "Cherry"], result.Items.Select(i => i.Name));
+        Assert.Equal(["Bananas", "Datule", "Citrina"], result.Items.Select(i => i.Name));
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class ItemsRepositoryCatalogTests
 
         var result = await service.GetCatalogAsync(Query(CatalogSort.PriceHigh));
 
-        Assert.Equal(["Cherry", "Date", "Banana"], result.Items.Select(i => i.Name));
+        Assert.Equal(["Citrina", "Datule", "Bananas"], result.Items.Select(i => i.Name));
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class ItemsRepositoryCatalogTests
 
         var result = await service.GetCatalogAsync(Query(CatalogSort.Name));
 
-        Assert.Equal(["Banana", "Cherry", "Date"], result.Items.Select(i => i.Name));
+        Assert.Equal(["Bananas", "Citrina", "Datule"], result.Items.Select(i => i.Name));
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class ItemsRepositoryCatalogTests
 
         var result = await service.GetCatalogAsync(Query(store: "rimi"));
 
-        Assert.Equal(2, result.TotalCount); // Banana ir Cherry
+        Assert.Equal(2, result.TotalCount); // Bananas ir Citrina
         Assert.All(result.Items, i => Assert.All(i.Offers, p => Assert.Equal("Rimi", p.StoreName)));
     }
 
@@ -156,10 +156,10 @@ public class ItemsRepositoryCatalogTests
         var (context, service) = await SeedAsync();
         await using var _ = context;
 
-        var result = await service.GetCatalogAsync(Query(search: "  CHER "));
+        var result = await service.GetCatalogAsync(Query(search: "  CITR "));
 
         var item = Assert.Single(result.Items);
-        Assert.Equal("Cherry", item.Name);
+        Assert.Equal("Citrina", item.Name);
     }
 
     [Theory]
@@ -203,7 +203,7 @@ public class ItemsRepositoryCatalogTests
         var result = await service.GetCatalogAsync(Query(CatalogSort.Name, page: 2, pageSize: 2));
 
         Assert.Equal(3, result.TotalCount);
-        Assert.Equal("Date", Assert.Single(result.Items).Name);
+        Assert.Equal("Datule", Assert.Single(result.Items).Name);
     }
 
     [Theory]
@@ -217,8 +217,8 @@ public class ItemsRepositoryCatalogTests
         var result = await service.GetCatalogAsync(Query(sort));
         var secondPage = await service.GetCatalogAsync(Query(sort, page: 2, pageSize: 1));
 
-        Assert.Equal(new[] { "Date", "Cherry", "Banana" }, result.Items.Select(item => item.Name));
-        Assert.Equal("Cherry", Assert.Single(secondPage.Items).Name);
+        Assert.Equal(new[] { "Datule", "Citrina", "Bananas" }, result.Items.Select(item => item.Name));
+        Assert.Equal("Citrina", Assert.Single(secondPage.Items).Name);
         Assert.Equal(3, secondPage.TotalCount);
     }
 
@@ -233,7 +233,7 @@ public class ItemsRepositoryCatalogTests
 
         Assert.Equal(2, result.TotalCount);
         var cherry = Assert.Single(result.Items);
-        Assert.Equal("Cherry", cherry.Name);
+        Assert.Equal("Citrina", cherry.Name);
         Assert.All(cherry.Offers, price => Assert.Equal(2, price.StoreId));
 
         var bothStores = await service.GetCatalogAsync(Query() with { StoreIds = [1, 2] });
@@ -254,7 +254,7 @@ public class ItemsRepositoryCatalogTests
         var result = await service.GetCatalogAsync(query);
 
         Assert.Equal(2, result.TotalCount);
-        Assert.Equal("Date", Assert.Single(result.Items).Name);
+        Assert.Equal("Datule", Assert.Single(result.Items).Name);
 
         var empty = await service.GetCatalogAsync(Query() with { MaxPrice = 0.5m });
         Assert.Equal(0, empty.TotalCount);
@@ -280,13 +280,13 @@ public class ItemsRepositoryCatalogTests
         var result = await service.GetCatalogAsync(
             Query(page: 2, pageSize: 1) with { DiscountedOnly = true });
         Assert.Equal(2, result.TotalCount);
-        Assert.Equal("Cherry", Assert.Single(result.Items).Name);
+        Assert.Equal("Citrina", Assert.Single(result.Items).Name);
 
         var selectedStore = await service.GetCatalogAsync(Query() with
         {
             DiscountedOnly = true,
             StoreIds = [1]
         });
-        Assert.Equal("Banana", Assert.Single(selectedStore.Items).Name);
+        Assert.Equal("Bananas", Assert.Single(selectedStore.Items).Name);
     }
 }

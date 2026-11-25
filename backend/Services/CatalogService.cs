@@ -23,15 +23,16 @@ public class CatalogService : ICatalogService
         var normalized = query with
         {
             Page = Math.Max(query.Page, 1),
-            PageSize = Math.Clamp(query.PageSize, 1, 100)
+            PageSize = Math.Clamp(query.PageSize, 1, 100),
+            Store = string.IsNullOrWhiteSpace(query.Store) ? null : query.Store?.ToLower()
         };
 
         var latestPrices = await _itemsRepository.GetLatestPricesWithStoreAsync(normalized.Store, normalized.StoreIds);
-        var latestItemIds = latestPrices.Select(price => price.ItemId).Distinct().ToHashSet();
 
-        var items = await _itemsRepository.GetItemsAsync();
-        var filteredItems = items
-            .Where(item => latestItemIds.Contains(item.Id))
+        var filteredItems = latestPrices
+            .Where(price => price.Item is not null)
+            .Select(price => price.Item!)
+            .DistinctBy(item => item.Id)
             .ToList();
 
         if (normalized.ItemIds is not null)

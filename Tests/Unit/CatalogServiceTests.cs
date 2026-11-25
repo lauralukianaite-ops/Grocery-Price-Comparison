@@ -26,18 +26,16 @@ public class CatalogServiceTests
     [Fact]
     public async Task GetCatalogAsync_ClampsPageAndPageSizeBeforeCallingRepository()
     {
-          _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
+        _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
               .ReturnsAsync(new List<Price>());
-          _items.Setup(r => r.GetItemsAsync())
-              .ReturnsAsync(new List<Item>());
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(0, 1000, null, null, CatalogSort.Name, null));
 
         Assert.Equal(1, response.Page);
         Assert.Equal(100, response.PageSize);
-          _items.Verify(r => r.GetLatestPricesWithStoreAsync(null, null), Times.Once);
-          _items.Verify(r => r.GetItemsAsync(), Times.Once);
+        _items.Verify(r => r.GetLatestPricesWithStoreAsync(null, null), Times.Once);
+        _items.Verify(r => r.GetItemsAsync(), Times.Never);
     }
 
     [Fact]
@@ -45,19 +43,15 @@ public class CatalogServiceTests
     {
         var iki = new Store { Id = 1, Name = "Iki" };
         var rimi = new Store { Id = 2, Name = "Rimi" };
-        var item = new Item
+        var item = new Item { Id = 1, Name = "Milk" };
+        var prices = new List<Price>
         {
-            Id = 1, Name = "Milk",
-            Prices =
-            [
-                new Price { ItemId = 1, StoreId = 2, Store = rimi, Cost = 2m, RecordedAt = DateTime.UtcNow },
-                new Price { ItemId = 1, StoreId = 1, Store = iki, Cost = 1m, RecordedAt = DateTime.UtcNow }
-            ]
+            new() { ItemId = 1, Item = item, StoreId = 2, Store = rimi, Cost = 2m, RecordedAt = DateTime.UtcNow },
+            new() { ItemId = 1, Item = item, StoreId = 1, Store = iki, Cost = 1m, RecordedAt = DateTime.UtcNow }
         };
-          _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
-              .ReturnsAsync(item.Prices);
-          _items.Setup(r => r.GetItemsAsync())
-              .ReturnsAsync([new Item { Id = item.Id, Name = item.Name }]);
+
+        _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
+              .ReturnsAsync(prices);
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(1, 12, null, null, CatalogSort.Name, null));
