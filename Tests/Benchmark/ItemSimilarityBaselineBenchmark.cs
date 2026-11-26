@@ -21,7 +21,7 @@ public class ItemSimilarityBenchmark
         _output = output;
     }
 
-    [Theory]
+    [Theory(Skip = "Performance benchmark - run manually when needed")]
     [InlineData(1_000, "Pienas")]
     [InlineData(10_000, "Pienas")]
     [InlineData(50_000, "Pienas")]

@@ -24,36 +24,34 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task GetCatalogAsync_ClampsPageAndPageSizeBeforeCallingRepository()
+    public async Task GetCatalogAsync_OutOfRangePageAndPageSize_ClampsValuesBeforeCallingRepository()
     {
-        _items.Setup(r => r.GetCatalogPageAsync(It.IsAny<CatalogQuery>()))
-              .ReturnsAsync(new PageResult<Item>(new List<Item>(), 0));
+        _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
+              .ReturnsAsync(new List<Price>());
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(0, 1000, null, null, CatalogSort.Name, null));
 
         Assert.Equal(1, response.Page);
         Assert.Equal(100, response.PageSize);
-        _items.Verify(r => r.GetCatalogPageAsync(
-            It.Is<CatalogQuery>(q => q.Page == 1 && q.PageSize == 100)), Times.Once);
+        _items.Verify(r => r.GetLatestPricesWithStoreAsync(null, null), Times.Once);
+        _items.Verify(r => r.GetItemsAsync(), Times.Never);
     }
 
     [Fact]
-    public async Task GetCatalogAsync_MapsOffersOrderedByStoreName()
+    public async Task GetCatalogAsync_MultipleStoresForSingleItem_MapsOffersOrderedByStoreName()
     {
         var iki = new Store { Id = 1, Name = "Iki" };
         var rimi = new Store { Id = 2, Name = "Rimi" };
-        var item = new Item
+        var item = new Item { Id = 1, Name = "Milk" };
+        var prices = new List<Price>
         {
-            Id = 1, Name = "Milk",
-            Prices =
-            [
-                new Price { StoreId = 2, Store = rimi, Cost = 2m, RecordedAt = DateTime.UtcNow },
-                new Price { StoreId = 1, Store = iki, Cost = 1m, RecordedAt = DateTime.UtcNow }
-            ]
+            new() { ItemId = 1, Item = item, StoreId = 2, Store = rimi, Cost = 2m, RecordedAt = DateTime.UtcNow },
+            new() { ItemId = 1, Item = item, StoreId = 1, Store = iki, Cost = 1m, RecordedAt = DateTime.UtcNow }
         };
-        _items.Setup(r => r.GetCatalogPageAsync(It.IsAny<CatalogQuery>()))
-              .ReturnsAsync(new PageResult<Item>([item], 1));
+
+        _items.Setup(r => r.GetLatestPricesWithStoreAsync(It.IsAny<string>(), It.IsAny<List<int>>()))
+              .ReturnsAsync(prices);
 
         var response = await _service.GetCatalogAsync(
             new CatalogQuery(1, 12, null, null, CatalogSort.Name, null));
@@ -64,7 +62,7 @@ public class CatalogServiceTests
     }
 
     [Fact]
-    public async Task GetStoresAsync_MapsEntitiesToDtos()
+    public async Task GetStoresAsync_ExistingStores_MapsEntitiesToDtos()
     {
         _stores.Setup(r => r.GetAllAsync())
                .ReturnsAsync([new Store { Id = 1, Name = "Iki" }]);

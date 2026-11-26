@@ -41,7 +41,7 @@ public class ItemSimilarityServiceTests
         };
 
     [Fact]
-    public async Task GetSimilarItemsAsync_MapsToDtos_AndWrapsInResponse()
+    public async Task GetSimilarItemsAsync_IndexReturnsMatches_MapsToDtosAndWrapsInResponse()
     {
         var fromIndex = new List<SimilarItemMatch>
         {
@@ -64,7 +64,7 @@ public class ItemSimilarityServiceTests
     }
 
     [Fact]
-    public async Task GetSimilarItemsAsync_PassesHighThresholdToIndex()
+    public async Task GetSimilarItemsAsync_CustomHighThreshold_PassesThresholdToIndex()
     {
         _indexMock
             .Setup(x => x.Find(It.IsAny<string>(), It.IsAny<double>()))
@@ -77,7 +77,7 @@ public class ItemSimilarityServiceTests
     }
 
     [Fact]
-    public async Task GetSimilarItemsAsync_ReturnsLatestPricePerStore()
+    public async Task GetSimilarItemsAsync_ItemWithMultiplePricesPerStore_ReturnsLatestPricePerStore()
     {
         var item = MakeItem(1, "Apelsinų sultys 100%",
             ("Barbora", 0.99m, 10), 
@@ -98,7 +98,7 @@ public class ItemSimilarityServiceTests
     }
 
     [Fact]
-    public async Task GetSimilarItemsAsync_RoundsSimilarityScoreToTwoDecimals()
+    public async Task GetSimilarItemsAsync_UnroundedSimilarityScore_RoundsToTwoDecimals()
     {
         var item = MakeItem(1, "Pienas", ("Maxima", 1m, 0));
         _indexMock
@@ -111,7 +111,7 @@ public class ItemSimilarityServiceTests
     }
 
     [Fact]
-    public async Task GetSimilarItemsAsync_SkipsItemsWithoutPrices()
+    public async Task GetSimilarItemsAsync_MatchedItemHasNoPrices_SkipsItem()
     {
         var item = MakeItem(1, "Ananasas"); // no prices
         _indexMock
@@ -126,7 +126,7 @@ public class ItemSimilarityServiceTests
     [Theory]
     [InlineData(-0.1)]
     [InlineData(1.1)]
-    public async Task GetSimilarItemsAsync_ThrowsOutOfRange_WhenThresholdInvalid(double threshold)
+    public async Task GetSimilarItemsAsync_ThresholdOutOfRange_ThrowsArgumentOutOfRangeException(double threshold)
     {
         var service = CreateService();
  
@@ -136,7 +136,7 @@ public class ItemSimilarityServiceTests
     }
  
     [Fact]
-    public async Task RefreshIndexAsync_LoadsItemsFromRepository_AndRebuildsIndex()
+    public async Task RefreshIndexAsync_RepositoryReturnsItems_RebuildsIndex()
     {
         var items = new List<Item> { new Item { Id = 1, Name = "Ananasas" } };
         _repositoryMock.Setup(r => r.GetItemsWithPriceAndStoreAsync()).ReturnsAsync(items);
@@ -147,13 +147,13 @@ public class ItemSimilarityServiceTests
     }
  
     [Fact]
-    public void Constructor_Throws_WhenSimilarityIndexIsMissing()
+    public void Constructor_NullSimilarityIndex_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(() => new ItemSimilarityService(null!, _repositoryMock.Object));
     }
  
     [Fact]
-    public void CalculateSimilarity_ReturnsOne_ForIdenticalOrDiacriticEquivalentStrings()
+    public void CalculateSimilarity_IdenticalOrDiacriticEquivalentStrings_ReturnsOne()
     {
         var service = CreateService();
  
@@ -163,7 +163,7 @@ public class ItemSimilarityServiceTests
     }
  
     [Fact]
-    public void CalculateSimilarity_ReturnsZero_WhenInputsAreNullOrEmpty()
+    public void CalculateSimilarity_NullOrWhitespaceInputs_ReturnsZero()
     {
         var service = CreateService();
  

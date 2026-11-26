@@ -1,11 +1,10 @@
 using backend.Entities;
-using backend.ValueObjects;
 
 namespace backend.Repositories;
 
 public interface IItemsRepository
 {
-    Task<PageResult<Item>> GetCatalogPageAsync(CatalogQuery query);
+    Task<List<Price>> GetLatestPricesWithStoreAsync(string? storeName = null, List<int>? storeIds = null);
     Task<List<Item>> GetItemsWithPriceAndStoreAsync();
     Task<bool> ExistsAsync(int itemId);
     Task<List<Price>> GetPriceWithStoreByItemIdAsync(int itemId);
