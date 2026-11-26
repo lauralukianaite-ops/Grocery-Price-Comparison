@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<BasketItem> BasketItems { get; set; }
     public DbSet<BasketRequestItem> BasketRequestItems { get; set; }
     public DbSet<BannedItem> BannedItems { get; set; }
+    public DbSet<AppUser> AppUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,5 +83,8 @@ public class AppDbContext : DbContext
             .WithMany(b => b.BannedItems)
             .HasForeignKey(i => i.BasketId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AppUser>()
+            .HasIndex(u => u.Auth0Id).IsUnique();
     }
 }
