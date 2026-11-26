@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using backend.Controllers;
 using backend.Data;
-using backend.Entities;
+using backend.DTOs;
 using backend.Repositories;
 using backend.Services;
 using Microsoft.AspNetCore.Http;
@@ -47,10 +47,9 @@ public class UserIntegrationTests
         SignInWith("google-oauth2|1048", "jonas@gmail.com");
         var result = await _controller.GetMe();
         var ok = Assert.IsType<OkObjectResult>(result);
-        var user = Assert.IsType<AppUser>(ok.Value);
-        Assert.Equal("google-oauth2|1048", user.Auth0Id);
+        var user = Assert.IsType<UserDto>(ok.Value);
         Assert.Equal("jonas@gmail.com", user.Email);
-        Assert.Single(_context.AppUsers);
+        Assert.Equal("google-oauth2|1048", Assert.Single(_context.AppUsers).Auth0Id);
     }
     
     // Jonas calls GetMe twice: both calls return the same user Id, and AppUsers still has one row.
@@ -62,8 +61,8 @@ public class UserIntegrationTests
         var firstResult = await _controller.GetMe();
         var secondResult = await _controller.GetMe();
 
-        var firstUser = Assert.IsType<AppUser>(Assert.IsType<OkObjectResult>(firstResult).Value);
-        var secondUser = Assert.IsType<AppUser>(Assert.IsType<OkObjectResult>(secondResult).Value);
+        var firstUser = Assert.IsType<UserDto>(Assert.IsType<OkObjectResult>(firstResult).Value);
+        var secondUser = Assert.IsType<UserDto>(Assert.IsType<OkObjectResult>(secondResult).Value);
         Assert.Equal(firstUser.Id, secondUser.Id);
         Assert.Single(_context.AppUsers);
     }

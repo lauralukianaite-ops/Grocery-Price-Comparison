@@ -1,4 +1,5 @@
-﻿using backend.Services.Interfaces;
+﻿using backend.DTOs;
+using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,6 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var user = await _userService.GetOrCreateCurrentUserAsync(User);
-        return Ok(user);
+        return Ok(new UserDto(user.Id, user.Email));
     }
 }
